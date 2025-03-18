@@ -1,18 +1,23 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  color: #213547;
 }
 
 .logo {
   height: 6em;
   padding: 1.5em;
   will-change: filter;
+  transition: filter 300ms;
 }
+
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
+
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
@@ -21,6 +26,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -38,4 +44,85 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* 앱 컨테이너 레이아웃 */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  color: #213547;
+}
+
+/* 콘텐츠 영역 */
+.content {
+  flex: 1;
+  padding: 20px;
+  background-color: #f0f4f8;
+  min-width: 600px;
+  /* 최소 너비 조정 */
+  overflow-x: auto;
+  /* 화면이 작아져도 스크롤 가능하게 */
+  color: #213547;
+}
+
+/* 홈 페이지 스타일 */
+.home-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  text-align: center;
+  color: #213547;
+}
+
+.home-container h1 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+}
+
+.home-container p {
+  color: #555;
+  margin-bottom: 30px;
+}
+
+.home-container button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.home-container button:hover {
+  background-color: #2980b9;
+}
+
+/* 반응형 레이아웃 */
+@media (max-width: 1200px) {
+  .content {
+    min-width: 500px;
+  }
+}
+
+@media (max-width: 992px) {
+  .content {
+    min-width: 400px;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+  }
+
+  .content {
+    min-width: 100%;
+    width: 100%;
+  }
 }
