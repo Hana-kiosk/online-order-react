@@ -24,7 +24,7 @@ const OrderList: React.FC = () => {
     const navigate = useNavigate();
 
     // 상태 관리
-    const [_, setOrders] = useState<OrderData[]>([]);
+    const [orders, setOrders] = useState<OrderData[]>([]);
     const [filteredOrders, setFilteredOrders] = useState<OrderData[]>([]);
     const [selectedMonth, setSelectedMonth] = useState<string>('all');
     const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
@@ -58,7 +58,7 @@ const OrderList: React.FC = () => {
         fetchOrders();
     }, [selectedYear, selectedMonth, searchTerm]);
 
-    // 상태에 따른 스타일 클래스 반환
+    // 상태에 따른 CSS 클래스 반환 함수
     const getStatusClass = (status: string): string => {
         switch (status) {
             case '입고완료':
@@ -67,6 +67,7 @@ const OrderList: React.FC = () => {
                 return 'status-partial';
             case '지연':
                 return 'status-delayed';
+            case '대기':
             default:
                 return 'status-pending';
         }
@@ -226,9 +227,43 @@ const OrderList: React.FC = () => {
                                     <td>{order.arrivalDate ? formatDate(order.arrivalDate) : '-'}</td>
                                     <td className="number-cell">{order.arrivalQuantity?.toLocaleString() || '-'}</td>
                                     <td>
-                                        <span className={`status-badge ${getStatusClass(order.status || '대기')}`}>
-                                            {order.status || '대기'}
-                                        </span>
+                                        <select 
+                                            className={`status-dropdown ${getStatusClass(order.status || '대기')}`}
+                                            value={order.status || '대기'}
+                                            onChange={async (e) => {
+                                                try {
+                                                    const newStatus = e.target.value;
+                                                    // ID가 없는 경우 예외 처리
+                                                    if (!order.id) {
+                                                        throw new Error('발주 ID가 없습니다');
+                                                    }
+                                                    
+                                                    // 업데이트할 데이터 준비
+                                                    const updatedOrder = {
+                                                        ...order,
+                                                        status: newStatus as '대기' | '입고완료' | '부분입고' | '지연'
+                                                    };
+                                                    
+                                                    // API 호출하여 상태 업데이트
+                                                    await orderApi.updateOrder(order.id, updatedOrder);
+                                                    
+                                                    // 성공 시 목록 갱신
+                                                    const updatedOrders = orders.map(o => 
+                                                        o.id === order.id ? {...o, status: newStatus} : o
+                                                    );
+                                                    setOrders(updatedOrders as OrderData[]);
+                                                    setFilteredOrders(updatedOrders as OrderData[]);
+                                                } catch (err) {
+                                                    console.error('상태 업데이트 오류:', err);
+                                                    alert('상태를 업데이트하는 중 오류가 발생했습니다.');
+                                                }
+                                            }}
+                                        >
+                                            <option value="대기">대기</option>
+                                            <option value="입고완료">입고완료</option>
+                                            <option value="부분입고">부분입고</option>
+                                            <option value="지연">지연</option>
+                                        </select>
                                     </td>
                                     <td>
                                         <button
