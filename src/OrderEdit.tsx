@@ -122,10 +122,10 @@ const OrderEdit: React.FC = () => {
             setSuccessMessage('발주 정보가 성공적으로 저장되었습니다.');
             setIsSaving(false);
 
-            // 3초 후 목록 페이지로 이동
+            // 1초 후 목록 페이지로 이동
             setTimeout(() => {
                 navigate('/list');
-            }, 3000);
+            }, 1000);
         } catch (err) {
             console.error('발주 정보 저장 중 오류 발생:', err);
             setError(err instanceof Error ? err.message : '발주 정보를 저장하는 중 오류가 발생했습니다.');
