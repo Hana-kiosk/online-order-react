@@ -107,28 +107,6 @@ const OrderEdit: React.FC = () => {
         }));
     };
 
-    // 상태 자동 업데이트
-    useEffect(() => {
-        // 입고수량과 발주수량을 비교하여 상태 자동 업데이트
-        if (orderData.arrivalQuantity === null || orderData.arrivalDate === null) {
-            setOrderData(prev => ({ ...prev, status: '대기' }));
-        } else if (orderData.arrivalQuantity < orderData.orderQuantity) {
-            setOrderData(prev => ({ ...prev, status: '부분입고' }));
-        } else {
-            setOrderData(prev => ({ ...prev, status: '입고완료' }));
-        }
-
-        // 입고일이 입고예정일보다 늦으면 '지연' 상태로 설정
-        if (orderData.arrivalDate && orderData.expectedArrivalEndDate) {
-            const arrivalDate = new Date(orderData.arrivalDate);
-            const expectedEndDate = new Date(orderData.expectedArrivalEndDate);
-
-            if (arrivalDate > expectedEndDate) {
-                setOrderData(prev => ({ ...prev, status: '지연' }));
-            }
-        }
-    }, [orderData.arrivalQuantity, orderData.orderQuantity, orderData.arrivalDate, orderData.expectedArrivalEndDate]);
-
     // 폼 제출 핸들러
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
