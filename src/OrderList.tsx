@@ -45,8 +45,15 @@ const OrderList: React.FC = () => {
                     searchTerm || undefined
                 );
 
-                setOrders(data);
-                setFilteredOrders(data);
+                const sortedData = [...data].sort((a, b) => {
+                    if (a.id && b.id) {
+                        return b.id.localeCompare(a.id);
+                    }
+                    return 0;
+                });
+
+                setOrders(sortedData);
+                setFilteredOrders(sortedData);
                 setLoading(false);
             } catch (err) {
                 console.error('발주 목록 로드 오류:', err);
