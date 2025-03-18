@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import DatePicker from 'react-datepicker';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import 'react-datepicker/dist/react-datepicker.css';
 import './OrderForm.css';
 import { orderApi, OrderData } from './services/api';
 
 const OrderForm: React.FC = () => {
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
     // 초기 상태 설정
     const initialOrderData: OrderData = {
         orderDate: null,

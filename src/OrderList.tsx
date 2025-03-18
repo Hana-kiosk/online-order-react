@@ -24,7 +24,7 @@ const OrderList: React.FC = () => {
     const navigate = useNavigate();
 
     // 상태 관리
-    const [orders, setOrders] = useState<OrderData[]>([]);
+    const [_, setOrders] = useState<OrderData[]>([]);
     const [filteredOrders, setFilteredOrders] = useState<OrderData[]>([]);
     const [selectedMonth, setSelectedMonth] = useState<string>('all');
     const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
