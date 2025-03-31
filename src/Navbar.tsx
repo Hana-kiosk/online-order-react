@@ -63,7 +63,7 @@ const Navbar = () => {
         <nav className="navbar">
             <div className="navbar-top">
                 <div className="navbar-logo">
-                    <Link to="/">하나플랫폼 물류시스템</Link>
+                    <Link to="/">하나플랫폼 전산시스템</Link>
                 </div>
                 <button className="navbar-toggle" onClick={toggleMenu}>
                     {isMenuOpen ? '✕' : '☰'}

@@ -15,7 +15,7 @@ const PlatformHome = () => {
 
   return (
     <div className="platform-home-container">
-      <h1>하나플랫폼 물류시스템</h1>
+      <h1>하나플랫폼 전산시스템</h1>
       <p>서비스를 선택해주세요</p>
       
       <div className="platform-services">
