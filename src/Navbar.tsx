@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext';
 import './Navbar.css';
 
@@ -43,6 +43,12 @@ const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+    
+    // 현재 경로가 발주 관리 시스템 내에 있는지 확인
+    const isInOrderSystem = location.pathname.startsWith('/order-system');
+    // 메인 페이지에 있는지 확인
+    const isInMainPage = location.pathname === '/';
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
@@ -57,7 +63,7 @@ const Navbar = () => {
         <nav className="navbar">
             <div className="navbar-top">
                 <div className="navbar-logo">
-                    <Link to="/">발주 관리 시스템</Link>
+                    <Link to="/">하나플랫폼 물류시스템</Link>
                 </div>
                 <button className="navbar-toggle" onClick={toggleMenu}>
                     {isMenuOpen ? '✕' : '☰'}
@@ -65,22 +71,37 @@ const Navbar = () => {
             </div>
 
             <ul className={`navbar-menu ${isMenuOpen ? 'open' : ''}`}>
-                <li>
-                    <NavLink
-                        to="/list"
-                        className={({ isActive }) => isActive ? 'active' : ''}
-                    >
-                        발주 목록
-                    </NavLink>
-                </li>
-                <li>
-                    <NavLink
-                        to="/form"
-                        className={({ isActive }) => isActive ? 'active' : ''}
-                    >
-                        발주 정보 입력
-                    </NavLink>
-                </li>
+                {/* 메인 페이지에 있을 때는 발주 관리 시스템 메뉴만 표시 */}
+                {isInMainPage && (
+                    <li className="menu-section main-page">
+                        <Link to="/order-system" className="section-title">발주 관리 시스템</Link>
+                    </li>
+                )}
+                
+                {/* 발주 관리 시스템 내부에 있을 때는 하위 메뉴 포함 표시 */}
+                {isInOrderSystem && (
+                    <>
+                        <li className="menu-section">
+                            <Link to="/order-system" className="section-title">발주 관리 시스템</Link>
+                        </li>
+                        <li>
+                            <NavLink
+                                to="/order-system/list"
+                                className={({ isActive }) => isActive ? 'active' : ''}
+                            >
+                                발주 목록
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink
+                                to="/order-system/form"
+                                className={({ isActive }) => isActive ? 'active' : ''}
+                            >
+                                발주 정보 입력
+                            </NavLink>
+                        </li>
+                    </>
+                )}
                 {user && (
                     <>
                         <li className="user-info">

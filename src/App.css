@@ -89,7 +89,7 @@
 }
 
 .home-container button {
-  background-color: #3498db;
+  background-color: #fbf7fc;
   color: white;
   border: none;
   padding: 10px 20px;
@@ -100,7 +100,68 @@
 }
 
 .home-container button:hover {
-  background-color: #2980b9;
+  background-color: #f7eef9;
+}
+
+/* 키오스크 스타일 버튼 */
+.kiosk-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 40px;
+}
+
+.kiosk-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 200px;
+  height: 200px;
+  border: none;
+  border-radius: 15px;
+  background-color: #fff;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  padding: 20px;
+}
+
+.kiosk-button:hover {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.kiosk-button:active {
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.kiosk-icon {
+  font-size: 50px;
+  margin-bottom: 15px;
+}
+
+.kiosk-label {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+
+.list-button {
+  background-color: #e3f2fd;
+  border: 2px solid #2196f3;
+}
+
+.form-button {
+  background-color: #e8f5e9;
+  border: 2px solid #4caf50;
+}
+
+.list-button:hover {
+  background-color: #bbdefb;
+}
+
+.form-button:hover {
+  background-color: #c8e6c9;
 }
 
 /* 반응형 레이아웃 */
@@ -124,5 +185,91 @@
   .content {
     min-width: 100%;
     width: 100%;
+  }
+
+  .kiosk-buttons {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  .kiosk-button {
+    width: 80%;
+    height: 150px;
+  }
+}
+
+/* 플랫폼 메인 홈페이지 스타일 */
+.platform-home-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 30px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  text-align: center;
+  color: #213547;
+}
+
+.platform-home-container h1 {
+  color: #1a237e;
+  margin-bottom: 20px;
+  font-size: 2.2rem;
+}
+
+.platform-home-container p {
+  color: #555;
+  margin-bottom: 40px;
+  font-size: 1.2rem;
+}
+
+.platform-services {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.platform-service-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 250px;
+  height: 250px;
+  border: none;
+  border-radius: 15px;
+  background-color: #f5f5f5;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: background-color 0.3s;
+  padding: 20px;
+  border: 2px solid #3f51b5;
+}
+
+.platform-service-button:hover {
+  background-color: #e8eaf6;
+}
+
+.service-icon {
+  font-size: 60px;
+  margin-bottom: 20px;
+}
+
+.service-label {
+  font-size: 20px;
+  font-weight: bold;
+  color: #3f51b5;
+}
+
+/* 반응형 디자인 - 플랫폼 홈페이지 */
+@media (max-width: 768px) {
+  .platform-service-button {
+    width: 80%;
+    height: 180px;
+  }
+  
+  .service-icon {
+    font-size: 50px;
   }
 }

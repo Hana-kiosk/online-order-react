@@ -124,7 +124,7 @@ const OrderEdit: React.FC = () => {
 
             // 0.5초 후 목록 페이지로 이동
             setTimeout(() => {
-                navigate('/list');
+                navigate('/order-system/list');
             }, 1000);
         } catch (err) {
             console.error('발주 정보 저장 중 오류 발생:', err);
@@ -145,7 +145,7 @@ const OrderEdit: React.FC = () => {
                 setIsSaving(true);
                 await orderApi.deleteOrder(orderId);
                 alert('발주 정보가 성공적으로 삭제되었습니다.');
-                navigate('/list');
+                navigate('/order-system/list');
             } catch (error) {
                 console.error('발주 삭제 오류:', error);
                 setError('발주 정보를 삭제하는 중 오류가 발생했습니다.');
@@ -338,7 +338,7 @@ const OrderEdit: React.FC = () => {
                         <button
                             type="button"
                             className="cancel-button"
-                            onClick={() => navigate('/list')}
+                            onClick={() => navigate('/order-system/list')}
                             disabled={isSaving}
                         >
                             취소
