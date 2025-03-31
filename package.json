@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "axios": "^1.8.3",
+    "jwt-decode": "^4.0.0",
     "react": "^19.0.0",
     "react-datepicker": "^8.2.1",
     "react-dom": "^19.0.0",
@@ -19,8 +20,8 @@
   "devDependencies": {
     "@eslint/js": "^9.21.0",
     "@types/react": "^19.0.10",
-    "@types/react-dom": "^19.0.4",
     "@types/react-datepicker": "^4.19.6",
+    "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",
     "eslint": "^9.21.0",
     "eslint-plugin-react-hooks": "^5.1.0",

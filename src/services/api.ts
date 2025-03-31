@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 // 플라스크 서버 주소
-const API_URL = 'https://port-0-online-order-flask-m47pn82w3295ead8.sel4.cloudtype.app/api';
+// const API_URL = 'https://port-0-online-order-flask-m47pn82w3295ead8.sel4.cloudtype.app/api';
+const API_URL = 'http://localhost:5000/api';
 
 // API 클라이언트 생성
 const apiClient = axios.create({
@@ -10,6 +11,35 @@ const apiClient = axios.create({
     'Content-Type': 'application/json'
   }
 });
+
+// 인증 토큰 처리를 위한 인터셉터 설정
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// 인증 오류 처리를 위한 응답 인터셉터 설정
+apiClient.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // 401 Unauthorized 오류 발생 시 로컬 스토리지에서 토큰 제거 후 로그인 페이지로 리다이렉트
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
 
 // 발주 데이터 타입 정의
 export interface OrderData {
@@ -68,7 +98,12 @@ const convertClientToServer = (clientOrder: OrderData) => {
   // 날짜 변환 헬퍼 함수
   const formatDate = (date: Date | null): string | null => {
     if (!date) return null;
-    return date.toISOString().split('T')[0];
+    // 타임존 문제를 해결하기 위해 날짜를 로컬 시간으로 처리
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   // 서버에서 기대하는 필드 이름으로 변환
