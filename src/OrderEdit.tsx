@@ -122,7 +122,7 @@ const OrderEdit: React.FC = () => {
             setSuccessMessage('발주 정보가 성공적으로 저장되었습니다.');
             setIsSaving(false);
 
-            // 1초 후 목록 페이지로 이동
+            // 0.5초 후 목록 페이지로 이동
             setTimeout(() => {
                 navigate('/list');
             }, 1000);

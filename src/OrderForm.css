@@ -111,6 +111,11 @@
     font-size: 14px;
 }
 
+/* 다른 달의 날짜를 회색으로 표시 */
+.react-datepicker__day--outside-month {
+    color: #ccc !important;
+}
+
 /* 날짜 범위 선택 스타일 */
 .react-datepicker__day--in-range {
     background-color: rgba(25, 118, 210, 0.2) !important;

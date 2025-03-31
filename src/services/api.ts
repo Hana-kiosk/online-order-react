@@ -98,7 +98,12 @@ const convertClientToServer = (clientOrder: OrderData) => {
   // 날짜 변환 헬퍼 함수
   const formatDate = (date: Date | null): string | null => {
     if (!date) return null;
-    return date.toISOString().split('T')[0];
+    // 타임존 문제를 해결하기 위해 날짜를 로컬 시간으로 처리
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   // 서버에서 기대하는 필드 이름으로 변환
