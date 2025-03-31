@@ -38,8 +38,8 @@ const OrderSystemHome = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="home-container">
-      <h1>발주 관리 시스템에 오신 것을 환영합니다</h1>
+    <div className="platform-home-container">
+      <h1>하나플랫폼 발주 관리 시스템</h1>
       <p>아래 버튼을 눌러 원하는 작업을 시작하세요.</p>
       
       <div className="kiosk-buttons">
