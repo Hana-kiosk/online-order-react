@@ -1,8 +1,11 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './Navbar';
 import OrderForm from './OrderForm';
 import OrderList from './OrderList';
 import OrderEdit from './OrderEdit';
+import LoginPage from './auth/LoginPage';
+import { AuthProvider } from './auth/AuthContext';
+import ProtectedRoute from './auth/protectedRoute';
 import './App.css';
 
 // 홈 페이지 컴포넌트에 네비게이션 버튼 포함
@@ -17,19 +20,73 @@ const Home = () => {
 
 function App() {
   return (
-    <BrowserRouter>
-      <div className="app-container">
-        <Navbar />
-        <div className="content">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/form" element={<OrderForm />} />
-            <Route path="/list" element={<OrderList />} />
-            <Route path="/edit/:orderId" element={<OrderEdit />} />
-          </Routes>
-        </div>
-      </div>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          
+          {/* 보호된 라우트 */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <div className="app-container">
+                  <Navbar />
+                  <div className="content">
+                    <Home />
+                  </div>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/form"
+            element={
+              <ProtectedRoute>
+                <div className="app-container">
+                  <Navbar />
+                  <div className="content">
+                    <OrderForm />
+                  </div>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/list"
+            element={
+              <ProtectedRoute>
+                <div className="app-container">
+                  <Navbar />
+                  <div className="content">
+                    <OrderList />
+                  </div>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/edit/:orderId"
+            element={
+              <ProtectedRoute>
+                <div className="app-container">
+                  <Navbar />
+                  <div className="content">
+                    <OrderEdit />
+                  </div>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* 알 수 없는 경로는 홈으로 리다이렉트 */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
