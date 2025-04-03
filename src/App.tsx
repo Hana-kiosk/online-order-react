@@ -5,7 +5,7 @@ import OrderList from './OrderList';
 import OrderEdit from './OrderEdit';
 import LoginPage from './auth/LoginPage';
 import { AuthProvider } from './auth/AuthContext';
-import ProtectedRoute from './auth/ProtectedRoute';
+import ProtectedRoute from './auth/protectedRoute';
 import './App.css';
 import { useNavigate } from 'react-router-dom';
 
