@@ -2,26 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './OrderList.css';
 import { orderApi, OrderData } from './services/api';
-
-// 발주 데이터 타입 정의
-// interface Order {
-//     id: string;
-//     orderDate: string;
-//     itemCode: string;
-//     colorName: string;
-//     orderQuantity: number;
-//     expectedArrivalStartDate: string;
-//     expectedArrivalEndDate: string;
-//     arrivalDate: string | null;
-//     arrivalQuantity: number | null;
-//     specialNote: string;
-//     remarks: string;
-//     status: '대기' | '입고완료' | '부분입고' | '지연';
-// }
+import { useAuth } from './auth/AuthContext';
+import axios from 'axios';
 
 const OrderList: React.FC = () => {
     // 라우터 네비게이션
     const navigate = useNavigate();
+    const { user } = useAuth();
+    const isAdmin = user?.role === 'admin';
 
     // 상태 관리
     const [orders, setOrders] = useState<OrderData[]>([]);
@@ -33,7 +21,6 @@ const OrderList: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-
         const fetchOrders = async () => {
             try {
                 setLoading(true);
@@ -103,7 +90,7 @@ const OrderList: React.FC = () => {
 
     // 발주 정보 수정 페이지로 이동
     const handleEditOrder = (orderId: string) => {
-        navigate(`/edit/${orderId}`);
+        navigate(`/order-system/edit/${orderId}`);
     };
 
     // 발주 정보 삭제 처리
@@ -227,43 +214,55 @@ const OrderList: React.FC = () => {
                                     <td>{order.arrivalDate ? formatDate(order.arrivalDate) : '-'}</td>
                                     <td className="number-cell">{order.arrivalQuantity?.toLocaleString() || '-'}</td>
                                     <td>
-                                        <select 
-                                            className={`status-dropdown ${getStatusClass(order.status || '대기')}`}
-                                            value={order.status || '대기'}
-                                            onChange={async (e) => {
-                                                try {
-                                                    const newStatus = e.target.value;
-                                                    // ID가 없는 경우 예외 처리
-                                                    if (!order.id) {
-                                                        throw new Error('발주 ID가 없습니다');
+                                        {isAdmin ? (
+                                            <select 
+                                                className={`status-dropdown ${getStatusClass(order.status || '대기')}`}
+                                                value={order.status || '대기'}
+                                                onChange={async (e) => {
+                                                    try {
+                                                        const newStatus = e.target.value;
+                                                        // ID가 없는 경우 예외 처리
+                                                        if (!order.id) {
+                                                            throw new Error('발주 ID가 없습니다');
+                                                        }
+                                                        
+                                                        // 업데이트할 데이터 준비
+                                                        const updatedOrder = {
+                                                            ...order,
+                                                            status: newStatus as '대기' | '입고완료' | '부분입고' | '지연'
+                                                        };
+                                                        
+                                                        // API 호출하여 상태 업데이트
+                                                        await orderApi.updateOrder(order.id, updatedOrder);
+                                                        
+                                                        // 성공 시 목록 갱신
+                                                        const updatedOrders = orders.map(o => 
+                                                            o.id === order.id ? {...o, status: newStatus} : o
+                                                        );
+                                                        setOrders(updatedOrders as OrderData[]);
+                                                        setFilteredOrders(updatedOrders as OrderData[]);
+                                                    } catch (err) {
+                                                        console.error('상태 업데이트 오류:', err);
+                                                        
+                                                        // 권한 오류인 경우 특별 메시지 표시
+                                                        if (axios.isAxiosError(err) && err.response?.status === 403) {
+                                                            alert('상태 변경 권한이 없습니다. 관리자에게 문의하세요.');
+                                                        } else {
+                                                            alert('상태를 업데이트하는 중 오류가 발생했습니다.');
+                                                        }
                                                     }
-                                                    
-                                                    // 업데이트할 데이터 준비
-                                                    const updatedOrder = {
-                                                        ...order,
-                                                        status: newStatus as '대기' | '입고완료' | '부분입고' | '지연'
-                                                    };
-                                                    
-                                                    // API 호출하여 상태 업데이트
-                                                    await orderApi.updateOrder(order.id, updatedOrder);
-                                                    
-                                                    // 성공 시 목록 갱신
-                                                    const updatedOrders = orders.map(o => 
-                                                        o.id === order.id ? {...o, status: newStatus} : o
-                                                    );
-                                                    setOrders(updatedOrders as OrderData[]);
-                                                    setFilteredOrders(updatedOrders as OrderData[]);
-                                                } catch (err) {
-                                                    console.error('상태 업데이트 오류:', err);
-                                                    alert('상태를 업데이트하는 중 오류가 발생했습니다.');
-                                                }
-                                            }}
-                                        >
-                                            <option value="대기">대기</option>
-                                            <option value="입고완료">입고완료</option>
-                                            <option value="부분입고">부분입고</option>
-                                            <option value="지연">지연</option>
-                                        </select>
+                                                }}
+                                            >
+                                                <option value="대기">대기</option>
+                                                <option value="입고완료">입고완료</option>
+                                                <option value="부분입고">부분입고</option>
+                                                <option value="지연">지연</option>
+                                            </select>
+                                        ) : (
+                                            <span className={`status-badge ${getStatusClass(order.status || '대기')}`}>
+                                                {order.status || '대기'}
+                                            </span>
+                                        )}
                                     </td>
                                     <td>
                                         <button
@@ -295,4 +294,4 @@ const OrderList: React.FC = () => {
     );
 };
 
-export default OrderList; 
+export default OrderList;
