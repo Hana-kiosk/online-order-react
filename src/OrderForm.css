@@ -8,6 +8,7 @@
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     color: #333;
+    text-align: center;
 }
 
 .order-form-container h2 {
@@ -43,21 +44,25 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
+    text-align: center;
 }
 
 .form-row {
     display: flex;
     gap: 20px;
     flex-wrap: wrap;
+    justify-content: center;
 }
 
 .form-group {
     flex: 1;
     min-width: 250px;
+    text-align: center;
 }
 
 .form-group.full-width {
     flex: 1 0 100%;
+    text-align: center;
 }
 
 .form-group label {
@@ -65,6 +70,7 @@
     margin-bottom: 8px;
     font-weight: 500;
     color: #555;
+    text-align: center;
 }
 
 .form-group input,
@@ -79,11 +85,13 @@
     color: #333;
     background-color: #fff;
     box-sizing: border-box;
+    text-align: center;
 }
 
 .form-group textarea {
     resize: vertical;
     min-height: 80px;
+    text-align: center;
 }
 
 /* DatePicker 스타일 */
@@ -96,6 +104,7 @@
     color: #333;
     background-color: #fff;
     box-sizing: border-box;
+    text-align: center;
 }
 
 /* DatePicker 컨테이너 스타일 */
@@ -103,6 +112,7 @@
 .react-datepicker__input-container {
     display: block;
     width: 100%;
+    text-align: center;
 }
 
 /* DatePicker 캘린더 팝업 스타일 */
@@ -139,9 +149,10 @@
 /* 액션 버튼 */
 .form-actions {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
     gap: 15px;
     margin-top: 10px;
+    text-align: center;
 }
 
 .cancel-button,
@@ -152,16 +163,13 @@
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.3s;
+    text-align: center;
 }
 
 .cancel-button {
     background-color: #ffebee;
     color: #c62828;
     border: 1px solid #ef9a9a;
-}
-
-.cancel-button:hover {
-    background-color: #ffcdd2;
 }
 
 .save-button {
@@ -171,7 +179,7 @@
 }
 
 .cancel-button:hover {
-    background-color: #e0e0e0;
+    background-color: #ffcdd2;
 }
 
 .save-button:hover {
