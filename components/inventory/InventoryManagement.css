@@ -1,0 +1,258 @@
+/* 재고 관리 컨테이너 */
+.inventory-management-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    color: #333;
+  }
+  
+  /* 제목 */
+  .inventory-management-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+  }
+  
+  /* 컨트롤 영역 */
+  .inventory-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+  
+  /* 검색 및 필터 영역 */
+  .search-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    flex-grow: 1;
+  }
+  
+  .search-group {
+    flex-grow: 1;
+    min-width: 170px; /* 원래 200px에서 줄임 */
+  }
+  
+  .search-input {
+    width: 70%; /* 너비 30% 줄임 */
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .filter-group label {
+    font-weight: bold;
+    color: #555;
+    white-space: nowrap;
+  }
+  
+  .filter-group select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    min-width: 120px;
+    color: #333;
+    background-color: #fff;
+  }
+  
+  /* 새 품목 추가 버튼 */
+  .add-inventory-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    white-space: nowrap;
+  }
+  
+  .add-inventory-button:hover {
+    background-color: #388E3C;
+  }
+  
+  /* 에러 메시지 */
+  .error-message {
+    background-color: #ffebee;
+    color: #c62828;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: bold;
+  }
+  
+  /* 테이블 컨테이너 */
+  .inventory-table-container {
+    overflow-x: auto;
+    margin-bottom: 20px;
+  }
+  
+  /* 테이블 스타일 */
+  .inventory-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    color: #333;
+  }
+  
+  .inventory-table th,
+  .inventory-table td {
+    padding: 12px 12px;
+    text-align: center; /* 모든 셀 가운데 정렬 */
+    border-bottom: 1px solid #eee;
+  }
+  
+  .inventory-table th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+    color: #333;
+    position: sticky;
+    top: 0;
+  }
+  
+  .inventory-table tbody tr:hover {
+    background-color: #f9f9f9;
+  }
+  
+  /* 숫자 셀 정렬 */
+  .number-cell {
+    text-align: right;
+  }
+  
+  /* 재고 상태별 스타일 */
+  .stock-empty {
+    background-color: #FFEBEE;
+  }
+  
+  .stock-empty:hover {
+    background-color: #FFCDD2;
+  }
+  
+  .stock-low {
+    background-color: #FFF8E1;
+  }
+  
+  .stock-low:hover {
+    background-color: #FFECB3;
+  }
+  
+  .stock-normal {
+    background-color: #ffffff;
+  }
+  
+  /* 입출고 이력 버튼 스타일 */
+  .history-button {
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-right: 5px;
+    width: 60px;
+  }
+  
+  .history-button:hover {
+    background-color: #1976D2;
+  }
+  
+  /* 이력 검색 버튼 스타일 */
+  .search-button {
+    background-color: #f1f1f1;
+    color: #333;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    width: 40px;
+    height: 32px;
+  }
+  
+  .search-button:hover {
+    background-color: #e0e0e0;
+  }
+  
+  /* 텍스트 가운데 정렬 */
+  .center-align {
+    text-align: center !important;
+  }
+  
+  /* 로딩 및 데이터 없음 메시지 */
+  .loading-message,
+  .no-data-message {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-size: 16px;
+  }
+  
+  /* 요약 정보 */
+  .inventory-summary {
+    text-align: right;
+    font-size: 14px;
+    color: #666;
+    margin-top: 10px;
+  }
+  
+  /* 반응형 디자인 */
+  @media (max-width: 992px) {
+    .inventory-controls {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .add-inventory-button {
+      width: 100%;
+    }
+  
+    .search-filters {
+      width: 100%;
+    }
+    
+    .search-group {
+      flex: 1 0 100%;
+    }
+    
+    .filter-group {
+      flex: 1 0 calc(50% - 15px);
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .filter-group {
+      flex: 1 0 100%;
+    }
+  
+    .inventory-table th,
+    .inventory-table td {
+      padding: 8px 10px;
+      font-size: 13px;
+    }
+    
+    .edit-button,
+    .delete-button {
+      padding: 5px 8px;
+      font-size: 12px;
+    }
+  }
