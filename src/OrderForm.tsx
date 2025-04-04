@@ -93,10 +93,8 @@ const OrderForm: React.FC = () => {
             setSubmitted(true);
             setIsSubmitting(false);
 
-            // 폼 초기화
-            setOrderData(initialOrderData);
-
-            // 3초 후 알림 메시지 숨기기
+            // 폼을 초기화하지 않고 현재 내용 유지
+            // 3초 후 알림 메시지만 숨기기
             setTimeout(() => {
                 setSubmitted(false);
             }, 3000);
@@ -270,7 +268,7 @@ const OrderForm: React.FC = () => {
                         onClick={handleReset}
                         disabled={isSubmitting}
                     >
-                        초기화
+                        전체 초기화
                     </button>
                     <button
                         type="submit"
