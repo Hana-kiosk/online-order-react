@@ -107,8 +107,11 @@ const OrderForm: React.FC = () => {
 
     // 폼 초기화
     const handleReset = () => {
-        setOrderData(initialOrderData);
-        setError(null);
+        // 확인 창 표시
+        if (window.confirm('모든 입력 내용을 초기화하시겠습니까?')) {
+            setOrderData(initialOrderData);
+            setError(null);
+        }
     };
 
     return (
