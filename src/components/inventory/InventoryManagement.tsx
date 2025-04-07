@@ -16,6 +16,10 @@ const InventoryManagement: React.FC = () => {
   const [isLogModalOpen, setIsLogModalOpen] = useState<boolean>(false);
   const [currentLogs, setCurrentLogs] = useState<any[]>([]);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
+  const [updateData, setUpdateData] = useState<Partial<InventoryItem>>({});
+  const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
+  const [memoText, setMemoText] = useState<string>('수정');
   const navigate = useNavigate();
 
 
@@ -87,10 +91,83 @@ const InventoryManagement: React.FC = () => {
     return Array.from(locations).sort();
   };
 
-  // 입출고 이력 보기
-  const handleViewHistory = (id: number) => {
-    // 향후 구현될 기능
-    alert(`품목 ID: ${id}의 입출고 이력 기능은 아직 개발 중입니다.`);
+  // 재고 수정하기
+  const handleUpdateInventory = (id: number) => {
+    const item = inventory.find(item => item.id === id);
+    if (item) {
+      setSelectedItem(item);
+      setUpdateData({
+        stock: item.stock,
+        safety_stock: item.safety_stock,
+        location: item.location
+      });
+      setMemoText('수정');
+      setIsUpdateModalOpen(true);
+    }
+  };
+
+  // 업데이트 입력 변경 핸들러
+  const handleUpdateInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    let processedValue: string | number = value;
+    
+    // 숫자 필드인 경우 숫자로 변환
+    if (name === 'stock' || name === 'safety_stock') {
+      processedValue = value === '' ? 0 : parseInt(value, 10);
+    }
+    
+    setUpdateData({
+      ...updateData,
+      [name]: processedValue
+    });
+  };
+
+  // 업데이트 제출 핸들러
+  const handleUpdateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!selectedItem) return;
+    
+    try {
+      // API 호출을 통해 재고 업데이트 - 타입 에러를 방지하기 위해 별도로 전달할 데이터 구성
+      const payload = {
+        ...updateData
+      };
+      
+      // @ts-ignore - memo 속성은 서버에서 처리되나 InventoryItem 타입에는 없습니다
+      payload.memo = memoText;
+      
+      await inventoryApi.updateInventory(selectedItem.id, payload);
+      
+      // 성공 메시지 표시 및 새로운 데이터 로드
+      setUpdateSuccess('재고가 성공적으로 업데이트되었습니다.');
+      
+      // 업데이트된 인벤토리 목록을 다시 가져옴
+      const updatedInventory = await inventoryApi.getInventory();
+      setInventory(updatedInventory);
+      setFilteredInventory(updatedInventory);
+      
+      // 3초 후 성공 메시지 숨기기 및 모달 닫기
+      setTimeout(() => {
+        setUpdateSuccess(null);
+        setIsUpdateModalOpen(false);
+        setSelectedItem(null);
+        setUpdateData({});
+        setMemoText('수정');
+      }, 1500);
+    } catch (err) {
+      console.error('재고 업데이트 오류:', err);
+      setError('재고를 업데이트하는 중 오류가 발생했습니다.');
+    }
+  };
+
+  // 업데이트 모달 닫기
+  const closeUpdateModal = () => {
+    setIsUpdateModalOpen(false);
+    setSelectedItem(null);
+    setUpdateData({});
+    setUpdateSuccess(null);
+    setMemoText('수정');
   };
 
   // 상세 이력 보기
@@ -226,10 +303,10 @@ const InventoryManagement: React.FC = () => {
                   <td className="center-align">
                     <button
                       className="history-button"
-                      onClick={() => handleViewHistory(item.id)}
-                      title="입출고 이력 보기"
+                      onClick={() => handleUpdateInventory(item.id)}
+                      title="재고 수정하기"
                     >
-                      입출고
+                      수정
                     </button>
                   </td>
                   <td className="center-align">
@@ -296,6 +373,84 @@ const InventoryManagement: React.FC = () => {
                     ))}
                   </tbody>
                 </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 재고 수정 모달 */}
+      {isUpdateModalOpen && (
+        <div className="modal-overlay" onClick={closeUpdateModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{selectedItem?.item_name} 재고 수정</h3>
+              <button className="modal-close-button" onClick={closeUpdateModal}>×</button>
+            </div>
+            <div className="modal-body">
+              {updateSuccess ? (
+                <div className="success-message">{updateSuccess}</div>
+              ) : (
+                <form onSubmit={handleUpdateSubmit} className="inventory-form">
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="stock">재고 수량</label>
+                      <input
+                        type="number"
+                        id="stock"
+                        name="stock"
+                        value={updateData.stock || 0}
+                        onChange={handleUpdateInputChange}
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className='form-row'>
+                    <div className="form-group">
+                      <label htmlFor="safety_stock">안전 재고</label>
+                      <input
+                        type="number"
+                        id="safety_stock"
+                        name="safety_stock"
+                        value={updateData.safety_stock || 0}
+                        onChange={handleUpdateInputChange}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="location">위치</label>
+                      <input
+                        type="text"
+                        id="location"
+                        name="location"
+                        value={updateData.location || ''}
+                        onChange={handleUpdateInputChange}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="form-row">
+                    <div className="form-group full-width">
+                      <label htmlFor="memo">메모</label>
+                      <textarea
+                        id="memo"
+                        name="memo"
+                        value={memoText}
+                        onChange={(e) => setMemoText(e.target.value)}
+                        placeholder="변경 사유 또는 메모"
+                        rows={3}
+                      ></textarea>
+                    </div>
+                  </div>
+                  
+                  <div className="form-actions">
+                    <button type="submit" className="submit-button">저장</button>
+                    <button type="button" className="cancel-button" onClick={closeUpdateModal}>취소</button>
+                  </div>
+                </form>
               )}
             </div>
           </div>
