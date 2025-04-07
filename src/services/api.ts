@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 // 플라스크 서버 주소
-const API_URL = 'https://port-0-online-order-flask-m47pn82w3295ead8.sel4.cloudtype.app/api';
-// const API_URL = 'http://localhost:5000/api';
+// const API_URL = 'https://port-0-online-order-flask-m47pn82w3295ead8.sel4.cloudtype.app/api';
+const API_URL = 'http://localhost:5000/api';
 
 // API 클라이언트 생성
 const apiClient = axios.create({
@@ -183,6 +183,65 @@ export const orderApi = {
       return response.data;
     } catch (error) {
       console.error('발주 삭제 오류:', error);
+      throw error;
+    }
+  }
+};
+
+// 재고 데이터 타입 정의
+export interface InventoryItem {
+  id: number;
+  item_name: string;
+  color: string | null;
+  stock: number;
+  safety_stock: number;
+  unit: string;
+  location: string | null;
+  updated_at: string;
+}
+
+// 재고 API 함수들
+export const inventoryApi = {
+  // 모든 재고 목록 조회
+  async getInventory() {
+    try {
+      const response = await apiClient.get('/inventory');
+      return response.data;
+    } catch (error) {
+      console.error('재고 목록 조회 오류:', error);
+      throw error;
+    }
+  },
+
+  // 재고 추가
+  async addInventory(itemData: InventoryItem) {
+    try {
+      const response = await apiClient.post('/inventory', itemData);
+      return response.data;
+    } catch (error) {
+      console.error('재고 추가 오류:', error);
+      throw error;
+    }
+  },
+
+  // 재고 수정
+  async updateInventory(id: number, itemData: Partial<InventoryItem>) {
+    try {
+      const response = await apiClient.put(`/inventory/${id}`, itemData);
+      return response.data;
+    } catch (error) {
+      console.error('재고 수정 오류:', error);
+      throw error;
+    }
+  },
+
+  // 재고 삭제
+  async deleteInventory(id: number) {
+    try {
+      const response = await apiClient.delete(`/inventory/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('재고 삭제 오류:', error);
       throw error;
     }
   }

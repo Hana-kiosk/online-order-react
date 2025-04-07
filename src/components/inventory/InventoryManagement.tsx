@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './InventoryManagement.css';
-import axios from 'axios';
+import { inventoryApi } from '../../services/api';
 
-// API URL 설정 (기존 프로젝트와 일치시킴)
-// const API_URL = 'https://port-0-online-order-flask-m47pn82w3295ead8.sel4.cloudtype.app/api';
-const API_URL = 'http://localhost:5000/api';
 
 // 재고 아이템 타입 정의
 interface InventoryItem {
@@ -31,19 +28,9 @@ const InventoryManagement: React.FC = () => {
     const fetchInventory = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem('token');
-        if (!token) {
-          throw new Error('인증 토큰이 없습니다.');
-        }
-
-        const response = await axios.get(`${API_URL}/inventory`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-
-        setInventory(response.data);
-        setFilteredInventory(response.data);
+        const data = await inventoryApi.getInventory();
+        setInventory(data);
+        setFilteredInventory(data);
         setLoading(false);
       } catch (err) {
         console.error('재고 목록 로드 오류:', err);
