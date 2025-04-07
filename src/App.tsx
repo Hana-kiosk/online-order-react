@@ -8,7 +8,7 @@ import { AuthProvider } from './auth/AuthContext';
 import ProtectedRoute from './auth/protectedRoute';
 import './App.css';
 import { useNavigate } from 'react-router-dom';
-import InventoryManagement from '../components/inventory/InventoryManagement';
+import InventoryManagement from './components/inventory/InventoryManagement';
 
 // 플랫폼 메인 홈페이지 컴포넌트
 const PlatformHome = () => {
