@@ -209,10 +209,19 @@
   
   /* 요약 정보 */
   .inventory-summary {
-    text-align: right;
+    margin-top: 10px;
+  }
+  
+  .summary-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .summary-content p {
     font-size: 14px;
     color: #666;
-    margin-top: 10px;
+    margin: 0;
   }
   
   /* 반응형 디자인 */

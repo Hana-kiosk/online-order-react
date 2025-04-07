@@ -254,9 +254,6 @@ const InventoryManagement: React.FC = () => {
       <h2>재고 관리</h2>
 
       <div className="inventory-controls">
-        <div className="add-inventory-form">
-          <button onClick={() => navigate('/inventory-system/form')} className="add-inventory-button">재고 추가</button>
-        </div>
         <div className="search-filters">
           <div className="search-group">
             <input
@@ -352,7 +349,10 @@ const InventoryManagement: React.FC = () => {
       )}
 
       <div className="inventory-summary">
-        <p>총 {filteredInventory.length}개의 재고 품목이 있습니다.</p>
+        <div className="summary-content">
+          <button onClick={() => navigate('/inventory-system/form')} className="add-inventory-button">재고 추가</button>
+          <p>총 {filteredInventory.length}개의 재고 품목이 있습니다.</p>
+        </div>
       </div>
       
       {/* 재고 로그 모달 */}
