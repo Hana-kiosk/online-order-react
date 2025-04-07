@@ -13,6 +13,9 @@ const InventoryManagement: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [locationFilter, setLocationFilter] = useState<string>('all');
+  const [isLogModalOpen, setIsLogModalOpen] = useState<boolean>(false);
+  const [currentLogs, setCurrentLogs] = useState<any[]>([]);
+  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const navigate = useNavigate();
 
 
@@ -95,13 +98,27 @@ const InventoryManagement: React.FC = () => {
     try {
       const logs = await inventoryApi.getInventoryLogs(id);
       console.log('재고 로그:', logs);
-      // 로그 데이터를 원하는 방식으로 표시
-      alert(`재고 로그: ${JSON.stringify(logs, null, 2)}`);
+      
+      // 현재 선택된 아이템 찾기
+      const item = inventory.find(item => item.id === id) || null;
+      setSelectedItem(item);
+      
+      // 로그 데이터 저장 및 모달 열기
+      setCurrentLogs(logs);
+      setIsLogModalOpen(true);
     } catch (err) {
       console.error('재고 로그 조회 오류:', err);
       alert('재고 로그를 조회하는 중 오류가 발생했습니다.');
     }
   };
+  
+  // 모달 닫기
+  const closeLogModal = () => {
+    setIsLogModalOpen(false);
+    setCurrentLogs([]);
+    setSelectedItem(null);
+  };
+
   // 재고 상태에 따른 클래스 반환
   const getStockStatusClass = (item: InventoryItem): string => {
     if (item.stock <= 0) {
@@ -244,6 +261,46 @@ const InventoryManagement: React.FC = () => {
       <div className="inventory-summary">
         <p>총 {filteredInventory.length}개의 재고 품목이 있습니다.</p>
       </div>
+      
+      {/* 재고 로그 모달 */}
+      {isLogModalOpen && (
+        <div className="modal-overlay" onClick={closeLogModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{selectedItem?.item_name} 재고 이력</h3>
+              <button className="modal-close-button" onClick={closeLogModal}>×</button>
+            </div>
+            <div className="modal-body">
+              {currentLogs.length === 0 ? (
+                <p className="no-data-message">이력 데이터가 없습니다.</p>
+              ) : (
+                <table className="log-table">
+                  <thead>
+                    <tr>
+                      <th>날짜</th>
+                      <th>수량</th>
+                      <th>유형</th>
+                      <th>책임</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentLogs.map((log, index) => (
+                      <tr key={index}>
+                        <td>{formatDate(log.created_at)}</td>
+                        <td className={log.quantity > 0 ? 'positive-change' : 'negative-change'}>
+                          {log.quantity > 0 ? '+' : ''}{log.quantity} {selectedItem?.unit}
+                        </td>
+                        <td>{log.memo}</td>
+                        <td>{log.created_by}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
