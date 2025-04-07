@@ -244,5 +244,16 @@ export const inventoryApi = {
       console.error('재고 삭제 오류:', error);
       throw error;
     }
+  },
+
+  // 재고 로그 조회
+  async getInventoryLogs(id: number) {
+    try {
+      const response = await apiClient.get(`/inventory/${id}/logs`);
+      return response.data;
+    } catch (error) {
+      console.error('재고 로그 조회 오류:', error);
+      throw error;
+    }
   }
 };

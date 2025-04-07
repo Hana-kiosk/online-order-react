@@ -1,19 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './InventoryManagement.css';
-import { inventoryApi } from '../../services/api';
+import { inventoryApi, InventoryItem } from '../../services/api';
+import { useNavigate } from 'react-router-dom';
 
 
-// 재고 아이템 타입 정의
-interface InventoryItem {
-  id: number;
-  item_name: string;
-  color: string | null;
-  stock: number;
-  safety_stock: number;
-  unit: string;
-  location: string | null;
-  updated_at: string;
-}
+
 
 const InventoryManagement: React.FC = () => {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
@@ -22,6 +13,8 @@ const InventoryManagement: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [locationFilter, setLocationFilter] = useState<string>('all');
+  const navigate = useNavigate();
+
 
   // 재고 데이터 가져오기
   useEffect(() => {
@@ -98,11 +91,17 @@ const InventoryManagement: React.FC = () => {
   };
 
   // 상세 이력 보기
-  const handleViewDetailLog = (id: number) => {
-    // 향후 구현될 기능
-    alert(`품목 ID: ${id}의 상세 이력 기능은 아직 개발 중입니다.`);
+  const handleViewDetailLog = async (id: number) => {
+    try {
+      const logs = await inventoryApi.getInventoryLogs(id);
+      console.log('재고 로그:', logs);
+      // 로그 데이터를 원하는 방식으로 표시
+      alert(`재고 로그: ${JSON.stringify(logs, null, 2)}`);
+    } catch (err) {
+      console.error('재고 로그 조회 오류:', err);
+      alert('재고 로그를 조회하는 중 오류가 발생했습니다.');
+    }
   };
-
   // 재고 상태에 따른 클래스 반환
   const getStockStatusClass = (item: InventoryItem): string => {
     if (item.stock <= 0) {
@@ -126,11 +125,28 @@ const InventoryManagement: React.FC = () => {
     });
   };
 
+
+  // 재고 삭제 핸들러
+  const handleDeleteInventory = async (id: number) => {
+    try {
+      await inventoryApi.deleteInventory(id);
+      const updatedInventory = inventory.filter(item => item.id !== id);
+      setInventory(updatedInventory);
+      setFilteredInventory(updatedInventory);
+    } catch (err) {
+      console.error('재고 삭제 오류:', err);
+      setError('재고를 삭제하는 중 오류가 발생했습니다.');
+    }
+  };
+
   return (
     <div className="inventory-management-container">
       <h2>재고 관리</h2>
 
       <div className="inventory-controls">
+        <div className="add-inventory-form">
+          <button onClick={() => navigate('/inventory-system/form')} className="add-inventory-button">재고 추가</button>
+        </div>
         <div className="search-filters">
           <div className="search-group">
             <input
@@ -179,6 +195,7 @@ const InventoryManagement: React.FC = () => {
                 <th>재고 수정</th>
                 <th>이력</th>
                 <th>최종 수정일</th>
+                <th>삭제</th>
               </tr>
             </thead>
             <tbody>
@@ -208,6 +225,15 @@ const InventoryManagement: React.FC = () => {
                     </button>
                   </td>
                   <td className="center-align">{formatDate(item.updated_at)}</td>
+                  <td className="center-align">
+                    <button
+                      className="delete-button"
+                      onClick={() => handleDeleteInventory(item.id)}
+                      title="재고 삭제"
+                    >
+                      삭제
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
