@@ -11,6 +11,7 @@ const InventoryManagement: React.FC = () => {
   const [filteredInventory, setFilteredInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [locationFilter, setLocationFilter] = useState<string>('all');
   const [isLogModalOpen, setIsLogModalOpen] = useState<boolean>(false);
@@ -128,6 +129,20 @@ const InventoryManagement: React.FC = () => {
     
     if (!selectedItem) return;
     
+    // 변경 사항 체크
+    const hasChanges = 
+      updateData.stock !== selectedItem.stock ||
+      updateData.safety_stock !== selectedItem.safety_stock ||
+      updateData.location !== selectedItem.location;
+    
+    // 변경 사항이 없는 경우 오류 표시
+    if (!hasChanges) {
+      const errorMsg = '변경된 내용이 없습니다. 수정하려면 값을 변경해주세요.';
+      setModalError(errorMsg);
+      setTimeout(() => setModalError(null), 2000);
+      return;
+    }
+    
     try {
       // API 호출을 통해 재고 업데이트 - 타입 에러를 방지하기 위해 별도로 전달할 데이터 구성
       const payload = {
@@ -154,10 +169,10 @@ const InventoryManagement: React.FC = () => {
         setSelectedItem(null);
         setUpdateData({});
         setMemoText('수정');
-      }, 1500);
+      }, 1000);
     } catch (err) {
       console.error('재고 업데이트 오류:', err);
-      setError('재고를 업데이트하는 중 오류가 발생했습니다.');
+      setModalError('재고를 업데이트하는 중 오류가 발생했습니다.');
     }
   };
 
@@ -168,6 +183,7 @@ const InventoryManagement: React.FC = () => {
     setUpdateData({});
     setUpdateSuccess(null);
     setMemoText('수정');
+    setModalError(null);
   };
 
   // 상세 이력 보기
@@ -341,7 +357,7 @@ const InventoryManagement: React.FC = () => {
       
       {/* 재고 로그 모달 */}
       {isLogModalOpen && (
-        <div className="modal-overlay" onClick={closeLogModal}>
+        <div className="modal-overlay log-modal" onClick={closeLogModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{selectedItem?.item_name} 재고 이력</h3>
@@ -381,7 +397,7 @@ const InventoryManagement: React.FC = () => {
 
       {/* 재고 수정 모달 */}
       {isUpdateModalOpen && (
-        <div className="modal-overlay" onClick={closeUpdateModal}>
+        <div className="modal-overlay update-modal" onClick={closeUpdateModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{selectedItem?.item_name} 재고 수정</h3>
@@ -392,6 +408,7 @@ const InventoryManagement: React.FC = () => {
                 <div className="success-message">{updateSuccess}</div>
               ) : (
                 <form onSubmit={handleUpdateSubmit} className="inventory-form">
+                  {modalError && <div className="error-message modal-error">{modalError}</div>}
                   <div className="form-row">
                     <div className="form-group">
                       <label htmlFor="stock">재고 수량</label>

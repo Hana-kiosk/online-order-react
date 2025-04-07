@@ -257,7 +257,7 @@
     }
   }
 
-  /* 모달 오버레이 */
+  /* 모달 오버레이 (공통) */
   .modal-overlay {
     position: fixed;
     top: 0;
@@ -271,17 +271,27 @@
     z-index: 1000;
   }
   
-  /* 모달 콘텐츠 */
+  /* 모달 콘텐츠 (공통) */
   .modal-content {
     background-color: white;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    width: 90%;
-    max-width: 800px;
-    max-height: 90vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    max-height: 90vh;
+  }
+  
+  /* 이력 모달 콘텐츠 */
+  .log-modal .modal-content {
+    width: 90%;
+    max-width: 900px;
+  }
+  
+  /* 수정 모달 콘텐츠 */
+  .update-modal .modal-content {
+    width: 80%;
+    max-width: 500px;
   }
   
   /* 모달 헤더 */
@@ -452,4 +462,11 @@
   
   .cancel-button:hover {
     background-color: #e0e0e0;
+  }
+
+  /* 모달 내 에러 메시지 */
+  .modal-error {
+    margin-bottom: 15px;
+    font-size: 14px;
+    padding: 10px;
   }
