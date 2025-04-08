@@ -224,6 +224,10 @@
     align-items: center;
   }
   
+  .inventory-count {
+    margin-left: auto; /* 오른쪽으로 밀어내기 */
+  }
+  
   .summary-content p {
     font-size: 14px;
     color: #666;

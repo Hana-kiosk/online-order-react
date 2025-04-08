@@ -438,8 +438,12 @@ const InventoryManagement: React.FC = () => {
 
       <div className="inventory-summary">
         <div className="summary-content">
-          <button onClick={() => navigate('/inventory-system/form')} className="add-inventory-button">재고 추가</button>
-          <p>총 {filteredInventory.length}개의 재고 품목이 있습니다.</p>
+          {isAdmin() && (
+            <button onClick={() => navigate('/inventory-system/form')} className="add-inventory-button">재고 추가</button>
+          )}
+          <div className="inventory-count">
+            <p>총 {filteredInventory.length}개의 재고 품목이 있습니다.</p>
+          </div>
         </div>
       </div>
       
