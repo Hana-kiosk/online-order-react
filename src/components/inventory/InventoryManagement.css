@@ -224,6 +224,10 @@
     align-items: center;
   }
   
+  .inventory-count {
+    margin-left: auto; /* 오른쪽으로 밀어내기 */
+  }
+  
   .summary-content p {
     font-size: 14px;
     color: #666;
@@ -518,4 +522,17 @@
 
   .restore-button:hover {
     background-color: #388E3C;
+  }
+
+  /* 작업 버튼 칼럼 스타일 */
+  .actions-column {
+    white-space: nowrap;
+  }
+
+  .actions-column button {
+    margin-right: 6px;
+  }
+
+  .actions-column button:last-child {
+    margin-right: 0;
   }

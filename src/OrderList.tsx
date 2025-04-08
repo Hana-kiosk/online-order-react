@@ -9,7 +9,8 @@ const OrderList: React.FC = () => {
     // 라우터 네비게이션
     const navigate = useNavigate();
     const { user } = useAuth();
-    const isAdmin = user?.role === 'admin';
+    // 관리자 권한 체크 함수 (admin 또는 master)
+    const isAdmin = user?.role === 'admin' || user?.role === 'master';
 
     // 상태 관리
     const [orders, setOrders] = useState<OrderData[]>([]);
@@ -192,7 +193,7 @@ const OrderList: React.FC = () => {
                                 <th>입고일</th>
                                 <th>입고수량</th>
                                 <th>상태</th>
-                                <th>작업</th>
+                                {isAdmin && <th>작업</th>}
                             </tr>
                         </thead>
                         <tbody>
@@ -264,22 +265,24 @@ const OrderList: React.FC = () => {
                                             </span>
                                         )}
                                     </td>
-                                    <td>
-                                        <button
-                                            className="order-list-edit-button"
-                                            onClick={() => handleEditOrder(order.id || '')}
-                                            title="발주 정보 수정"
-                                        >
-                                            수정
-                                        </button>
-                                        <button
-                                            className="order-list-delete-button"
-                                            onClick={() => handleDeleteOrder(order.id || '')}
-                                            title="발주 정보 삭제"
-                                        >
-                                            삭제
-                                        </button>
-                                    </td>
+                                    {isAdmin && (
+                                        <td>
+                                            <button
+                                                className="order-list-edit-button"
+                                                onClick={() => handleEditOrder(order.id || '')}
+                                                title="발주 정보 수정"
+                                            >
+                                                수정
+                                            </button>
+                                            <button
+                                                className="order-list-delete-button"
+                                                onClick={() => handleDeleteOrder(order.id || '')}
+                                                title="발주 정보 삭제"
+                                            >
+                                                삭제
+                                            </button>
+                                        </td>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>
