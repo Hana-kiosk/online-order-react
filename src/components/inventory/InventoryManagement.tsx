@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import './InventoryManagement.css';
 import { inventoryApi, InventoryItem } from '../../services/api';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../auth/AuthContext';
 
 
 
 
 const InventoryManagement: React.FC = () => {
+  const { user } = useAuth();
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [filteredInventory, setFilteredInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -313,6 +315,11 @@ const InventoryManagement: React.FC = () => {
     }
   };
 
+  // 관리자 권한 체크 함수
+  const isAdmin = (): boolean => {
+    return user?.role === 'admin' || user?.role === 'master';
+  };
+
   return (
     <div className="inventory-management-container">
       <h2>재고 관리</h2>
@@ -379,10 +386,10 @@ const InventoryManagement: React.FC = () => {
                 <th>재고수량</th>
                 <th>안전재고</th>
                 <th>위치</th>
-                <th>재고 수정</th>
+                {isAdmin() && <th>재고 수정</th>}
                 <th>이력</th>
                 <th>최종 수정일</th>
-                <th>{visibilityFilter === 'deleted' ? "복구" : "삭제"}</th>
+                {isAdmin() && <th>{visibilityFilter === 'deleted' ? "복구" : "삭제"}</th>}
               </tr>
             </thead>
             <tbody>
@@ -395,15 +402,17 @@ const InventoryManagement: React.FC = () => {
                   </td>
                   <td className="center-align">{item.safety_stock.toLocaleString()} {item.unit}</td>
                   <td className="center-align">{item.location || '창고1'}</td>
-                  <td className="center-align">
-                    <button
-                      className="history-button"
-                      onClick={() => handleUpdateInventory(item.id)}
-                      title="재고 수정하기"
-                    >
-                      수정
-                    </button>
-                  </td>
+                  {isAdmin() && (
+                    <td className="center-align">
+                      <button
+                        className="history-button"
+                        onClick={() => handleUpdateInventory(item.id)}
+                        title="재고 수정하기"
+                      >
+                        수정
+                      </button>
+                    </td>
+                  )}
                   <td className="center-align">
                     <button
                       className="search-button"
@@ -414,15 +423,17 @@ const InventoryManagement: React.FC = () => {
                     </button>
                   </td>
                   <td className="center-align">{formatDate(item.updated_at)}</td>
-                  <td className="center-align">
-                    <button
-                      className={visibilityFilter === 'deleted' ? "restore-button" : "delete-button"}
-                      onClick={() => visibilityFilter === 'deleted' ? handleRestoreInventory(item.id) : handleDeleteInventory(item.id)}
-                      title={visibilityFilter === 'deleted' ? "재고 복구" : "재고 삭제"}
-                    >
-                      {visibilityFilter === 'deleted' ? "복구" : "삭제"}
-                    </button>
-                  </td>
+                  {isAdmin() && (
+                    <td className="center-align">
+                      <button
+                        className={visibilityFilter === 'deleted' ? "restore-button" : "delete-button"}
+                        onClick={() => visibilityFilter === 'deleted' ? handleRestoreInventory(item.id) : handleDeleteInventory(item.id)}
+                        title={visibilityFilter === 'deleted' ? "재고 복구" : "재고 삭제"}
+                      >
+                        {visibilityFilter === 'deleted' ? "복구" : "삭제"}
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
