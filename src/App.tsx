@@ -8,7 +8,8 @@ import { AuthProvider } from './auth/AuthContext';
 import ProtectedRoute from './auth/protectedRoute';
 import './App.css';
 import { useNavigate } from 'react-router-dom';
-import InventoryManagement from '../components/inventory/InventoryManagement';
+import InventoryManagement from './components/inventory/InventoryManagement';
+import InventoryForm from './components/inventory/InventoryForm';
 
 // 플랫폼 메인 홈페이지 컴포넌트
 const PlatformHome = () => {
@@ -194,6 +195,20 @@ function App() {
                   <Navbar />
                   <div className="content">
                     <InventoryManagement />
+                  </div>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/inventory-system/form"
+            element={
+              <ProtectedRoute>
+                <div className="app-container">
+                  <Navbar />
+                  <div className="content">
+                    <InventoryForm />
                   </div>
                 </div>
               </ProtectedRoute>

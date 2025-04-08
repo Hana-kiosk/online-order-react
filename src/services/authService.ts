@@ -2,8 +2,8 @@ import axios from 'axios';
 import { LoginCredentials, LoginResponse, User } from '../types/auth';
 
 // API 클라이언트 생성 (기존 API_URL 재사용)
-// const API_URL = 'https://port-0-online-order-flask-m47pn82w3295ead8.sel4.cloudtype.app/api';
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://port-0-online-order-flask-m47pn82w3295ead8.sel4.cloudtype.app/api';
+// const API_URL = 'http://localhost:5000/api';
 
 const apiClient = axios.create({
   baseURL: API_URL,
