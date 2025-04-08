@@ -14,6 +14,7 @@ const InventoryManagement: React.FC = () => {
   const [modalError, setModalError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [locationFilter, setLocationFilter] = useState<string>('all');
+  const [visibilityFilter, setVisibilityFilter] = useState<string>('active');
   const [isLogModalOpen, setIsLogModalOpen] = useState<boolean>(false);
   const [currentLogs, setCurrentLogs] = useState<any[]>([]);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
@@ -46,7 +47,7 @@ const InventoryManagement: React.FC = () => {
   // 검색어 변경 핸들러
   useEffect(() => {
     filterInventory();
-  }, [searchTerm, locationFilter, inventory]);
+  }, [searchTerm, locationFilter, visibilityFilter, inventory]);
 
   const filterInventory = () => {
     let filtered = [...inventory];
@@ -66,6 +67,13 @@ const InventoryManagement: React.FC = () => {
         item.location === locationFilter
       );
     }
+    
+    // 활성/삭제 상태로 필터링
+    if (visibilityFilter === 'active') {
+      filtered = filtered.filter(item => item.visible !== 0);
+    } else if (visibilityFilter === 'deleted') {
+      filtered = filtered.filter(item => item.visible === 0);
+    }
 
     setFilteredInventory(filtered);
   };
@@ -78,6 +86,11 @@ const InventoryManagement: React.FC = () => {
   // 위치 필터 변경 핸들러
   const handleLocationFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setLocationFilter(e.target.value);
+  };
+
+  // 가시성 필터 변경 핸들러
+  const handleVisibilityFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setVisibilityFilter(e.target.value);
   };
 
   // 위치 옵션 생성
@@ -238,6 +251,14 @@ const InventoryManagement: React.FC = () => {
 
   // 재고 삭제 핸들러
   const handleDeleteInventory = async (id: number) => {
+    const item = inventory.find(item => item.id === id);
+    if (!item) return;
+    
+    // 삭제 확인 메시지
+    const isConfirmed = window.confirm(`${item.item_name}(${item.color}) 재고를 삭제하시겠습니까?`);
+    
+    if (!isConfirmed) return;
+    
     try {
       await inventoryApi.deleteInventory(id);
       const updatedInventory = inventory.filter(item => item.id !== id);
@@ -263,6 +284,18 @@ const InventoryManagement: React.FC = () => {
               onChange={handleSearchChange}
               className="search-input"
             />
+          </div>
+          
+          <div className="filter-group">
+            <label htmlFor="visibilityFilter">상태:</label>
+            <select
+              id="visibilityFilter"
+              value={visibilityFilter}
+              onChange={handleVisibilityFilterChange}
+            >
+              <option value="active">활성 재고</option>
+              <option value="deleted">삭제 재고</option>
+            </select>
           </div>
           
           <div className="filter-group">

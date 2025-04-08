@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 // 플라스크 서버 주소
-const API_URL = 'https://port-0-online-order-flask-m47pn82w3295ead8.sel4.cloudtype.app/api';
-// const API_URL = 'http://localhost:5000/api';
+// const API_URL = 'https://port-0-online-order-flask-m47pn82w3295ead8.sel4.cloudtype.app/api';
+const API_URL = 'http://localhost:5000/api';
 
 // API 클라이언트 생성
 const apiClient = axios.create({
@@ -198,6 +198,7 @@ export interface InventoryItem {
   unit: string;
   location: string | null;
   updated_at: string;
+  visible: number; // 0: 삭제됨, 1: 활성 상태
 }
 
 // 재고 API 함수들
