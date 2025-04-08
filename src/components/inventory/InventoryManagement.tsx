@@ -386,10 +386,9 @@ const InventoryManagement: React.FC = () => {
                 <th>재고수량</th>
                 <th>안전재고</th>
                 <th>위치</th>
-                {isAdmin() && <th>재고 수정</th>}
                 <th>이력</th>
                 <th>최종 수정일</th>
-                {isAdmin() && <th>{visibilityFilter === 'deleted' ? "복구" : "삭제"}</th>}
+                {isAdmin() && <th>작업</th>}
               </tr>
             </thead>
             <tbody>
@@ -402,17 +401,6 @@ const InventoryManagement: React.FC = () => {
                   </td>
                   <td className="center-align">{item.safety_stock.toLocaleString()} {item.unit}</td>
                   <td className="center-align">{item.location || '창고1'}</td>
-                  {isAdmin() && (
-                    <td className="center-align">
-                      <button
-                        className="history-button"
-                        onClick={() => handleUpdateInventory(item.id)}
-                        title="재고 수정하기"
-                      >
-                        수정
-                      </button>
-                    </td>
-                  )}
                   <td className="center-align">
                     <button
                       className="search-button"
@@ -424,7 +412,14 @@ const InventoryManagement: React.FC = () => {
                   </td>
                   <td className="center-align">{formatDate(item.updated_at)}</td>
                   {isAdmin() && (
-                    <td className="center-align">
+                    <td className="center-align actions-column">
+                      <button
+                        className="history-button"
+                        onClick={() => handleUpdateInventory(item.id)}
+                        title="재고 수정하기"
+                      >
+                        수정
+                      </button>
                       <button
                         className={visibilityFilter === 'deleted' ? "restore-button" : "delete-button"}
                         onClick={() => visibilityFilter === 'deleted' ? handleRestoreInventory(item.id) : handleDeleteInventory(item.id)}
