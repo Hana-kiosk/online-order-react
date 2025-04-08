@@ -28,7 +28,7 @@
 }
 
 .navbar-logo a:hover {
-    color: #3498db;
+    color: #1abc9c;
 }
 
 /* 사용자 정보 작은 표시 (로고 아래) */
@@ -70,7 +70,7 @@
 
 .navbar-menu a:hover {
     background-color: rgba(255, 255, 255, 0.1);
-    border-left-color: #3498db;
+    border-left-color: #1abc9c;
 }
 
 .navbar-menu a.active {
@@ -101,7 +101,7 @@
 }
 
 .section-title:hover {
-    color: #3498db;
+    color: #1abc9c;
 }
 
 /* 활성화된 섹션 스타일 */
