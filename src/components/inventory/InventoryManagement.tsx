@@ -214,11 +214,14 @@ const InventoryManagement: React.FC = () => {
 
   // 재고 상태에 따른 클래스 반환
   const getStockStatusClass = (item: InventoryItem): string => {
-    if (item.stock <= 0) {
+    if (item.stock <= 0 && item.safety_stock > 0) {
+      // 재고가 0 이하이고 안전재고가 0보다 클 때만 빨간색(empty) 표시
       return 'stock-empty';
-    } else if (item.stock < item.safety_stock) {
+    } else if (item.stock < item.safety_stock && item.safety_stock > 0) {
+      // 재고가 안전재고보다 적고 안전재고가 0보다 클 때만 노란색(low) 표시
       return 'stock-low';
     } else {
+      // 그 외 모든 경우(안전재고가 0인 경우 포함)
       return 'stock-normal';
     }
   };
@@ -310,7 +313,9 @@ const InventoryManagement: React.FC = () => {
                 <tr key={item.id} className={getStockStatusClass(item)}>
                   <td className="center-align">{item.item_name}</td>
                   <td className="center-align">{item.color || '-'}</td>
-                  <td className="center-align">{item.stock.toLocaleString()} {item.unit}</td>
+                  <td className={`center-align ${item.stock < item.safety_stock && item.safety_stock > 0 ? 'critical-stock' : ''}`}>
+                    {item.stock.toLocaleString()} {item.unit}
+                  </td>
                   <td className="center-align">{item.safety_stock.toLocaleString()} {item.unit}</td>
                   <td className="center-align">{item.location || '창고1'}</td>
                   <td className="center-align">

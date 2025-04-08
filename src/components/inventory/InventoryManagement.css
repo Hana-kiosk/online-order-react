@@ -146,11 +146,17 @@
   }
   
   .stock-low {
-    background-color: #FFF8E1;
+    background-color: #FFCDD2;
   }
   
   .stock-low:hover {
-    background-color: #FFECB3;
+    background-color: #EF9A9A;
+  }
+  
+  /* 낮은 재고 수량 셀 강조 스타일 */
+  .critical-stock {
+    font-weight: bold;
+    color: #D32F2F; /* 진한 빨간색 */
   }
   
   .stock-normal {
