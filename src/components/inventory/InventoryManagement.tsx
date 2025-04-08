@@ -11,6 +11,7 @@ const InventoryManagement: React.FC = () => {
   const [filteredInventory, setFilteredInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [locationFilter, setLocationFilter] = useState<string>('all');
@@ -273,9 +274,12 @@ const InventoryManagement: React.FC = () => {
     
     try {
       await inventoryApi.deleteInventory(id);
-      const updatedInventory = inventory.filter(item => item.id !== id);
+      // 삭제 후 전체 재고 목록을 다시 불러옴
+      const updatedInventory = await inventoryApi.getInventory();
       setInventory(updatedInventory);
       setFilteredInventory(updatedInventory);
+      setSuccessMessage(`${item.item_name} 재고가 성공적으로 삭제되었습니다.`);
+      setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       console.error('재고 삭제 오류:', err);
       setError('재고를 삭제하는 중 오류가 발생했습니다.');
@@ -298,6 +302,8 @@ const InventoryManagement: React.FC = () => {
       const updatedInventory = await inventoryApi.getInventory();
       setInventory(updatedInventory);
       setFilteredInventory(updatedInventory);
+      setSuccessMessage(`${item.item_name} 재고가 성공적으로 복구되었습니다.`);
+      setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       console.error('재고 복구 오류:', err);
       setError('재고를 복구하는 중 오류가 발생했습니다.');
@@ -352,6 +358,10 @@ const InventoryManagement: React.FC = () => {
         <div className="error-message">{error}</div>
       )}
 
+      {successMessage && (
+        <div className="success-message">{successMessage}</div>
+      )}
+
       {loading ? (
         <div className="loading-message">데이터를 불러오는 중...</div>
       ) : filteredInventory.length === 0 ? (
@@ -401,7 +411,7 @@ const InventoryManagement: React.FC = () => {
                   <td className="center-align">{formatDate(item.updated_at)}</td>
                   <td className="center-align">
                     <button
-                      className="delete-button"
+                      className={visibilityFilter === 'deleted' ? "restore-button" : "delete-button"}
                       onClick={() => visibilityFilter === 'deleted' ? handleRestoreInventory(item.id) : handleDeleteInventory(item.id)}
                       title={visibilityFilter === 'deleted' ? "재고 복구" : "재고 삭제"}
                     >
