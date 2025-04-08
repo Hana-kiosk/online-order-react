@@ -89,8 +89,20 @@ const InventoryManagement: React.FC = () => {
   };
 
   // 가시성 필터 변경 핸들러
-  const handleVisibilityFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setVisibilityFilter(e.target.value);
+  const handleVisibilityFilterChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newFilter = e.target.value;
+    setVisibilityFilter(newFilter);
+    try {
+      setLoading(true);
+      const data = await inventoryApi.getInventory();
+      setInventory(data);
+      setFilteredInventory(data);
+      setLoading(false);
+    } catch (err) {
+      console.error('재고 목록 로드 오류:', err);
+      setError('재고 목록을 불러오는 중 오류가 발생했습니다.');
+      setLoading(false);
+    }
   };
 
   // 위치 옵션 생성
@@ -270,6 +282,28 @@ const InventoryManagement: React.FC = () => {
     }
   };
 
+  // 재고 복구 핸들러
+  const handleRestoreInventory = async (id: number) => {
+    const item = inventory.find(item => item.id === id);
+    if (!item) return;
+    
+    // 복구 확인 메시지
+    const isConfirmed = window.confirm(`${item.item_name}(${item.color}) 재고를 복구하시겠습니까?`);
+    
+    if (!isConfirmed) return;
+    
+    try {
+      await inventoryApi.restoreInventory(id);
+      // 복구 후 전체 재고 목록을 다시 불러옴
+      const updatedInventory = await inventoryApi.getInventory();
+      setInventory(updatedInventory);
+      setFilteredInventory(updatedInventory);
+    } catch (err) {
+      console.error('재고 복구 오류:', err);
+      setError('재고를 복구하는 중 오류가 발생했습니다.');
+    }
+  };
+
   return (
     <div className="inventory-management-container">
       <h2>재고 관리</h2>
@@ -335,7 +369,7 @@ const InventoryManagement: React.FC = () => {
                 <th>재고 수정</th>
                 <th>이력</th>
                 <th>최종 수정일</th>
-                <th>삭제</th>
+                <th>{visibilityFilter === 'deleted' ? "복구" : "삭제"}</th>
               </tr>
             </thead>
             <tbody>
@@ -368,10 +402,10 @@ const InventoryManagement: React.FC = () => {
                   <td className="center-align">
                     <button
                       className="delete-button"
-                      onClick={() => handleDeleteInventory(item.id)}
-                      title="재고 삭제"
+                      onClick={() => visibilityFilter === 'deleted' ? handleRestoreInventory(item.id) : handleDeleteInventory(item.id)}
+                      title={visibilityFilter === 'deleted' ? "재고 복구" : "재고 삭제"}
                     >
-                      삭제
+                      {visibilityFilter === 'deleted' ? "복구" : "삭제"}
                     </button>
                   </td>
                 </tr>

@@ -256,5 +256,16 @@ export const inventoryApi = {
       console.error('재고 로그 조회 오류:', error);
       throw error;
     }
+  },
+
+  // 재고 복구
+  async restoreInventory(id: number) {
+    try {
+      const response = await apiClient.put(`/inventory/${id}/restore`);
+      return response.data;
+    } catch (error) {
+      console.error('재고 복구 오류:', error);
+      throw error;
+    }
   }
 };
