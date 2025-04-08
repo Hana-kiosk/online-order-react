@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 // 플라스크 서버 주소
-// const API_URL = 'https://port-0-online-order-flask-m47pn82w3295ead8.sel4.cloudtype.app/api';
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://port-0-online-order-flask-m47pn82w3295ead8.sel4.cloudtype.app/api';
+// const API_URL = 'http://localhost:5000/api';
 
 // API 클라이언트 생성
 const apiClient = axios.create({
