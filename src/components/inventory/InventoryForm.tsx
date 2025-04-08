@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import './InventoryManagement.css';
+import './InventoryForm.css';
 import { inventoryApi, InventoryItem } from '../../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const InventoryForm: React.FC = () => {
+  const navigate = useNavigate();
   const initialInventoryData: Partial<InventoryItem> = {
     item_name: '',
     color: '',
@@ -74,6 +76,13 @@ const InventoryForm: React.FC = () => {
     }
   };
 
+  // 취소 버튼 처리
+  const handleCancel = () => {
+    if (window.confirm('입력을 취소하고 이전 페이지로 돌아가시겠습니까?')) {
+      navigate(-1);
+    }
+  };
+
   return (
     <div className="inventory-form-container">
       <h2>재고 정보 입력</h2>
@@ -91,6 +100,16 @@ const InventoryForm: React.FC = () => {
       )}
 
       <form onSubmit={handleSubmit} className="inventory-form">
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+          <button
+            type="button"
+            className="cancel-button"
+            onClick={handleReset}
+            disabled={isSubmitting}
+          >
+            전체 초기화
+          </button>
+        </div>
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="item_name">품목명</label>
@@ -174,12 +193,13 @@ const InventoryForm: React.FC = () => {
         <div className="form-actions">
           <button
             type="button"
-            className="cancel-button"
-            onClick={handleReset}
+            className="back-button"
+            onClick={handleCancel}
             disabled={isSubmitting}
           >
-            전체 초기화
+            취소
           </button>
+          
           <button
             type="submit"
             className="save-button"
