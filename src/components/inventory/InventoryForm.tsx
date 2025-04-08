@@ -39,9 +39,6 @@ const InventoryForm: React.FC = () => {
       if (!inventoryData.item_name || inventoryData.item_name.trim() === '') {
         throw new Error('품목명을 입력해주세요.');
       }
-      if (!inventoryData.stock || inventoryData.stock <= 0) {
-        throw new Error('재고 수량을 입력해주세요.');
-      }
 
       console.log('재고 데이터 제출:', inventoryData);
 
@@ -165,7 +162,7 @@ const InventoryForm: React.FC = () => {
         </div>
 
         <div className="form-row">
-          <div className="form-group">
+          {/* <div className="form-group">
             <label htmlFor="unit">단위</label>
             <input
               type="text"
@@ -175,7 +172,7 @@ const InventoryForm: React.FC = () => {
               onChange={handleChange}
               autoComplete="off"
             />
-          </div>
+          </div> */}
 
           <div className="form-group">
             <label htmlFor="location">위치</label>
