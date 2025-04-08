@@ -90,20 +90,10 @@ const InventoryManagement: React.FC = () => {
   };
 
   // 가시성 필터 변경 핸들러
-  const handleVisibilityFilterChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleVisibilityFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newFilter = e.target.value;
     setVisibilityFilter(newFilter);
-    try {
-      setLoading(true);
-      const data = await inventoryApi.getInventory();
-      setInventory(data);
-      setFilteredInventory(data);
-      setLoading(false);
-    } catch (err) {
-      console.error('재고 목록 로드 오류:', err);
-      setError('재고 목록을 불러오는 중 오류가 발생했습니다.');
-      setLoading(false);
-    }
+    // 클라이언트에서 필터링만 수행하고 API 호출 제거
   };
 
   // 위치 옵션 생성
@@ -186,7 +176,7 @@ const InventoryManagement: React.FC = () => {
       // 업데이트된 인벤토리 목록을 다시 가져옴
       const updatedInventory = await inventoryApi.getInventory();
       setInventory(updatedInventory);
-      setFilteredInventory(updatedInventory);
+      // 필터링은 useEffect에서 자동으로 처리됨
       
       // 3초 후 성공 메시지 숨기기 및 모달 닫기
       setTimeout(() => {
@@ -273,16 +263,21 @@ const InventoryManagement: React.FC = () => {
     if (!isConfirmed) return;
     
     try {
+      setLoading(true); // 로딩 상태 설정
       await inventoryApi.deleteInventory(id);
+      
       // 삭제 후 전체 재고 목록을 다시 불러옴
       const updatedInventory = await inventoryApi.getInventory();
       setInventory(updatedInventory);
-      setFilteredInventory(updatedInventory);
+      // 필터링은 useEffect에서 자동으로 처리됨
+      
       setSuccessMessage(`${item.item_name} 재고가 성공적으로 삭제되었습니다.`);
       setTimeout(() => setSuccessMessage(null), 3000);
+      setLoading(false); // 로딩 상태 해제
     } catch (err) {
       console.error('재고 삭제 오류:', err);
       setError('재고를 삭제하는 중 오류가 발생했습니다.');
+      setLoading(false); // 오류 발생 시에도 로딩 상태 해제
     }
   };
 
@@ -297,16 +292,21 @@ const InventoryManagement: React.FC = () => {
     if (!isConfirmed) return;
     
     try {
+      setLoading(true); // 로딩 상태 설정
       await inventoryApi.restoreInventory(id);
+      
       // 복구 후 전체 재고 목록을 다시 불러옴
       const updatedInventory = await inventoryApi.getInventory();
       setInventory(updatedInventory);
-      setFilteredInventory(updatedInventory);
+      // 필터링은 useEffect에서 자동으로 처리됨
+      
       setSuccessMessage(`${item.item_name} 재고가 성공적으로 복구되었습니다.`);
       setTimeout(() => setSuccessMessage(null), 3000);
+      setLoading(false); // 로딩 상태 해제
     } catch (err) {
       console.error('재고 복구 오류:', err);
       setError('재고를 복구하는 중 오류가 발생했습니다.');
+      setLoading(false); // 오류 발생 시에도 로딩 상태 해제
     }
   };
 
