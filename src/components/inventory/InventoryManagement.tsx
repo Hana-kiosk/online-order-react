@@ -4,9 +4,6 @@ import { inventoryApi, InventoryItem } from '../../services/api';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 
-
-
-
 const InventoryManagement: React.FC = () => {
   const { user } = useAuth();
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
@@ -25,8 +22,8 @@ const InventoryManagement: React.FC = () => {
   const [updateData, setUpdateData] = useState<Partial<InventoryItem>>({});
   const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
   const [memoText, setMemoText] = useState<string>('수정');
+  const [logsLoading, setLogsLoading] = useState<boolean>(false);
   const navigate = useNavigate();
-
 
   // 재고 데이터 가져오기
   useEffect(() => {
@@ -207,19 +204,27 @@ const InventoryManagement: React.FC = () => {
   // 상세 이력 보기
   const handleViewDetailLog = async (id: number) => {
     try {
-      const logs = await inventoryApi.getInventoryLogs(id);
-      console.log('재고 로그:', logs);
-      
       // 현재 선택된 아이템 찾기
       const item = inventory.find(item => item.id === id) || null;
       setSelectedItem(item);
       
-      // 로그 데이터 저장 및 모달 열기
-      setCurrentLogs(logs);
+      // 로딩 상태 설정
+      setLogsLoading(true);
+      setCurrentLogs([]);
       setIsLogModalOpen(true);
+      
+      // 로그 데이터 가져오기
+      const logs = await inventoryApi.getInventoryLogs(id);
+      console.log('재고 로그:', logs);
+      
+      // 로그 데이터 저장
+      setCurrentLogs(logs || []);
+      setLogsLoading(false);
     } catch (err) {
       console.error('재고 로그 조회 오류:', err);
-      alert('재고 로그를 조회하는 중 오류가 발생했습니다.');
+      // 에러 발생 시에도 빈 배열로 설정하여 "데이터가 없습니다" 메시지 표시
+      setCurrentLogs([]);
+      setLogsLoading(false);
     }
   };
   
@@ -228,6 +233,7 @@ const InventoryManagement: React.FC = () => {
     setIsLogModalOpen(false);
     setCurrentLogs([]);
     setSelectedItem(null);
+    setLogsLoading(false);
   };
 
   // 재고 상태에 따른 클래스 반환
@@ -456,8 +462,10 @@ const InventoryManagement: React.FC = () => {
               <button className="modal-close-button" onClick={closeLogModal}>×</button>
             </div>
             <div className="modal-body">
-              {currentLogs.length === 0 ? (
-                <p className="no-data-message">이력 데이터가 없습니다.</p>
+              {logsLoading ? (
+                <p className="loading-message">이력 데이터를 불러오는 중...</p>
+              ) : currentLogs.length === 0 ? (
+                <p className="no-data-message">변경 내용이 없습니다</p>
               ) : (
                 <table className="log-table">
                   <thead>
