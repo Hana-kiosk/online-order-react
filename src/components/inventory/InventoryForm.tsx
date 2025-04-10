@@ -22,10 +22,19 @@ const InventoryForm: React.FC = () => {
   // 입력 필드 변경 처리
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setInventoryData({
-      ...inventoryData,
-      [name]: value
-    });
+    
+    // 숫자 필드인 경우 숫자로 변환
+    if (name === 'stock' || name === 'safety_stock') {
+      setInventoryData({
+        ...inventoryData,
+        [name]: value === '' ? 0 : parseInt(value, 10)
+      });
+    } else {
+      setInventoryData({
+        ...inventoryData,
+        [name]: value
+      });
+    }
   };
 
   // 폼 제출 처리
@@ -141,7 +150,7 @@ const InventoryForm: React.FC = () => {
               type="number"
               id="stock"
               name="stock"
-              value={inventoryData.stock || 0}
+              value={inventoryData.stock === 0 ? '' : inventoryData.stock}
               onChange={handleChange}
               required
               autoComplete="off"
@@ -154,7 +163,7 @@ const InventoryForm: React.FC = () => {
               type="number"
               id="safety_stock"
               name="safety_stock"
-              value={inventoryData.safety_stock || 0}
+              value={inventoryData.safety_stock === 0 ? '' : inventoryData.safety_stock}
               onChange={handleChange}
               autoComplete="off"
             />
@@ -184,6 +193,9 @@ const InventoryForm: React.FC = () => {
               onChange={handleChange}
               autoComplete="off"
             />
+          </div>
+          <div className="form-group">
+            {/* 균형 맞추기 위해 빈 공간 추가 */}
           </div>
         </div>
 

@@ -23,6 +23,11 @@ const InventoryManagement: React.FC = () => {
   const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
   const [memoText, setMemoText] = useState<string>('수정');
   const [logsLoading, setLogsLoading] = useState<boolean>(false);
+  // 페이지네이션 관련 상태 추가
+  const [currentPage, setCurrentPage] = useState<number>(0);
+  const [paginatedInventory, setPaginatedInventory] = useState<InventoryItem[]>([]);
+  const [pageCount, setPageCount] = useState<number>(0);
+  const itemsPerPage = 10; // 페이지당 항목 수
   const navigate = useNavigate();
 
   // 재고 데이터 가져오기
@@ -48,6 +53,14 @@ const InventoryManagement: React.FC = () => {
   useEffect(() => {
     filterInventory();
   }, [searchTerm, locationFilter, visibilityFilter, inventory]);
+
+  // 페이지네이션 처리
+  useEffect(() => {
+    const offset = currentPage * itemsPerPage;
+    const currentItems = filteredInventory.slice(offset, offset + itemsPerPage);
+    setPaginatedInventory(currentItems);
+    setPageCount(Math.ceil(filteredInventory.length / itemsPerPage));
+  }, [currentPage, filteredInventory]);
 
   const filterInventory = () => {
     let filtered = [...inventory];
@@ -76,6 +89,13 @@ const InventoryManagement: React.FC = () => {
     }
 
     setFilteredInventory(filtered);
+    // 필터링 후 첫 페이지로 이동
+    setCurrentPage(0);
+  };
+
+  // 페이지 변경 핸들러
+  const handlePageChange = (selectedItem: { selected: number }) => {
+    setCurrentPage(selectedItem.selected);
   };
 
   // 검색어 입력 핸들러
@@ -326,6 +346,121 @@ const InventoryManagement: React.FC = () => {
     return user?.role === 'admin' || user?.role === 'master';
   };
 
+  // 페이지네이션 렌더링을 위한 함수
+  const renderPagination = () => {
+    if (pageCount <= 1) return null;
+    
+    // 항상 표시할 페이지 버튼 수
+    const pagesToShow = 5;
+    const pageButtons = [];
+    
+    // 맨 처음 페이지 버튼
+    pageButtons.push(
+      <li key="first" className="page-item first">
+        <button 
+          className="page-link" 
+          onClick={() => handlePageChange({ selected: 0 })}
+          disabled={currentPage === 0}
+        >
+          {"처음"}
+        </button>
+      </li>
+    );
+    
+    // 이전 버튼
+    pageButtons.push(
+      <li key="prev" className="page-item previous">
+        <button 
+          className="page-link" 
+          onClick={() => currentPage > 0 && handlePageChange({ selected: currentPage - 1 })}
+          disabled={currentPage === 0}
+        >
+          {"<"}
+        </button>
+      </li>
+    );
+
+    // 페이지 번호 버튼들
+    for (let i = 0; i < pagesToShow; i++) {
+      let pageNum;
+      
+      // 페이지 번호 계산 로직 - 항상 현재 페이지가 가운데에 오도록
+      if (pageCount <= pagesToShow) {
+        // 전체 페이지 수가 표시할 페이지 수보다 적은 경우
+        pageNum = i;
+        if (pageNum >= pageCount) continue; // 페이지 수보다 많은 버튼은 표시하지 않음
+      } else {
+        // 전체 페이지 수가 표시할 페이지 수보다 많은 경우
+        const half = Math.floor(pagesToShow / 2);
+        
+        if (currentPage < half) {
+          // 현재 페이지가 앞쪽에 있는 경우
+          pageNum = i;
+        } else if (currentPage >= pageCount - half) {
+          // 현재 페이지가 뒤쪽에 있는 경우
+          pageNum = pageCount - (pagesToShow - i);
+        } else {
+          // 현재 페이지가 중간에 있는 경우
+          pageNum = currentPage - half + i;
+        }
+      }
+      
+      if (pageNum < 0 || pageNum >= pageCount) {
+        // 범위를 벗어나는 페이지 버튼은 빈 버튼으로 대체
+        pageButtons.push(
+          <li key={`empty-${i}`} className="page-item empty">
+            <span className="page-link empty-link"></span>
+          </li>
+        );
+      } else {
+        pageButtons.push(
+          <li key={pageNum} className={`page-item ${currentPage === pageNum ? 'active' : ''}`}>
+            <button 
+              className="page-link" 
+              onClick={() => handlePageChange({ selected: pageNum })}
+            >
+              {pageNum + 1}
+            </button>
+          </li>
+        );
+      }
+    }
+    
+    // 다음 버튼
+    pageButtons.push(
+      <li key="next" className="page-item next">
+        <button 
+          className="page-link" 
+          onClick={() => currentPage < pageCount - 1 && handlePageChange({ selected: currentPage + 1 })}
+          disabled={currentPage === pageCount - 1}
+        >
+          {">"}
+        </button>
+      </li>
+    );
+    
+    // 맨 마지막 페이지 버튼
+    pageButtons.push(
+      <li key="last" className="page-item last">
+        <button 
+          className="page-link" 
+          onClick={() => handlePageChange({ selected: pageCount - 1 })}
+          disabled={currentPage === pageCount - 1}
+        >
+          {"맨끝"}
+        </button>
+      </li>
+    );
+    
+    return (
+      <div className="pagination-container">
+        <ul className="pagination">
+          {pageButtons}
+        </ul>
+      </div>
+    );
+  };
+
   return (
     <div className="inventory-management-container">
       <h2>재고 관리</h2>
@@ -398,7 +533,7 @@ const InventoryManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredInventory.map((item) => (
+              {paginatedInventory.map((item) => (
                 <tr key={item.id} className={getStockStatusClass(item)}>
                   <td className="center-align">{item.item_name}</td>
                   <td className="center-align">{item.color || '-'}</td>
@@ -439,20 +574,29 @@ const InventoryManagement: React.FC = () => {
               ))}
             </tbody>
           </table>
+          
+          {/* 페이지네이션 및 요약 정보 행 */}
+          <div className="pagination-summary-row">
+            {/* 재고 추가 버튼 (왼쪽) */}
+            <div className="left-section">
+              {isAdmin() && (
+                <button onClick={() => navigate('/inventory-system/form')} className="add-inventory-button">재고 추가</button>
+              )}
+            </div>
+            
+            {/* 커스텀 페이지네이션 컴포넌트 (중앙) */}
+            <div className="center-section">
+              {renderPagination()}
+            </div>
+            
+            {/* 총 항목 수 정보 (오른쪽) */}
+            <div className="right-section">
+              <p className="inventory-count-text">총 {filteredInventory.length}개의 재고 품목이 있습니다.</p>
+            </div>
+          </div>
         </div>
       )}
 
-      <div className="inventory-summary">
-        <div className="summary-content">
-          {isAdmin() && (
-            <button onClick={() => navigate('/inventory-system/form')} className="add-inventory-button">재고 추가</button>
-          )}
-          <div className="inventory-count">
-            <p>총 {filteredInventory.length}개의 재고 품목이 있습니다.</p>
-          </div>
-        </div>
-      </div>
-      
       {/* 재고 로그 모달 */}
       {isLogModalOpen && (
         <div className="modal-overlay log-modal" onClick={closeLogModal}>

@@ -536,3 +536,137 @@
   .actions-column button:last-child {
     margin-right: 0;
   }
+
+  /* 페이지네이션 스타일 */
+  .pagination-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+  }
+
+  .pagination {
+    display: flex;
+    justify-content: center;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .page-item {
+    margin: 0 3px;
+  }
+
+  .page-link {
+    display: block;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    color: #333;
+    cursor: pointer;
+    text-decoration: none;
+    transition: none;
+  }
+
+  /* 이전, 다음 버튼에만 테두리 적용 */
+  .page-item.previous .page-link,
+  .page-item.next .page-link,
+  .page-item.first .page-link,
+  .page-item.last .page-link {
+    border: 1px solid #ddd;
+  }
+
+  .page-link:hover {
+    background-color: #f0f0f0;
+  }
+
+  .page-item.active .page-link {
+    background-color: #4a90e2;
+    color: white;
+    transition: none;
+  }
+
+  .page-item.disabled .page-link {
+    color: #999;
+    pointer-events: none;
+    cursor: default;
+  }
+
+  /* 빈 페이지 버튼 스타일 */
+  .page-item.empty {
+    visibility: hidden;
+    width: 30px;
+    margin: 0 3px;
+  }
+
+  .empty-link {
+    display: block;
+    padding: 5px 10px;
+  }
+
+  /* 페이지네이션과 요약 정보를 담는 컨테이너 */
+  .pagination-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .left-section {
+    flex: 1;
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .center-section {
+    flex: 2;
+    display: flex;
+    justify-content: center;
+  }
+
+  .right-section {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .inventory-count-text {
+    margin: 0;
+    font-size: 14px;
+    color: #666;
+    white-space: nowrap;
+  }
+
+  /* 페이지네이션 스타일 수정 */
+  .pagination-container {
+    margin-top: 0;
+  }
+
+  /* 반응형 디자인 */
+  @media (max-width: 768px) {
+    .pagination-summary-row {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .left-section,
+    .center-section,
+    .right-section {
+      width: 100%;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+    
+    .left-section {
+      order: 1;
+    }
+    
+    .center-section {
+      order: 3;
+    }
+    
+    .right-section {
+      order: 2;
+    }
+  }
