@@ -1,7 +1,6 @@
 // src/OrderForm.tsx
 import React, { useState, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
-import { useNavigate } from 'react-router-dom';
 import 'react-datepicker/dist/react-datepicker.css';
 import './OrderForm.css';
 import { orderApi, OrderData, inventoryApi } from './services/api';
@@ -9,7 +8,6 @@ import Autocomplete from './components/common/Autocomplete';
 import './components/common/Autocomplete.css';
 
 const OrderForm: React.FC = () => {
-  // const navigate = useNavigate();
   // 초기 상태 설정
   const initialOrderData: OrderData = {
     orderDate: null,
