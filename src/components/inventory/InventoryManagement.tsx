@@ -3,7 +3,6 @@ import './InventoryManagement.css';
 import { inventoryApi, InventoryItem } from '../../services/api';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
-import ReactPaginate from 'react-paginate';
 
 const InventoryManagement: React.FC = () => {
   const { user } = useAuth();
