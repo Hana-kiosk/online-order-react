@@ -195,6 +195,7 @@ const InventoryForm: React.FC = () => {
             />
           </div>
           <div className="form-group">
+            {/* 균형 맞추기 위해 빈 공간 추가 */}
           </div>
         </div>
 
