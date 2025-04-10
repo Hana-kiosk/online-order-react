@@ -49,9 +49,9 @@
   }
   
   .filter-group {
+    margin-left: 15px;
     display: flex;
     align-items: center;
-    gap: 8px;
   }
   
   .filter-group label {
@@ -61,13 +61,15 @@
   }
   
   .filter-group select {
-    padding: 8px 12px;
+    margin-left: 5px;
+    padding: 5px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    font-size: 14px;
-    min-width: 120px;
-    color: #333;
-    background-color: #fff;
+    min-width: 80px;
+  }
+  
+  #itemsPerPageFilter {
+    min-width: 70px;
   }
   
   /* 새 품목 추가 버튼 */

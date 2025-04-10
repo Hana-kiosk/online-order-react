@@ -27,7 +27,7 @@ const InventoryManagement: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [paginatedInventory, setPaginatedInventory] = useState<InventoryItem[]>([]);
   const [pageCount, setPageCount] = useState<number>(0);
-  const itemsPerPage = 10; // 페이지당 항목 수
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10); // 페이지당 항목 수 상태로 변경
   const navigate = useNavigate();
 
   // 재고 데이터 가져오기
@@ -60,7 +60,7 @@ const InventoryManagement: React.FC = () => {
     const currentItems = filteredInventory.slice(offset, offset + itemsPerPage);
     setPaginatedInventory(currentItems);
     setPageCount(Math.ceil(filteredInventory.length / itemsPerPage));
-  }, [currentPage, filteredInventory]);
+  }, [currentPage, filteredInventory, itemsPerPage]);
 
   const filterInventory = () => {
     let filtered = [...inventory];
@@ -96,6 +96,13 @@ const InventoryManagement: React.FC = () => {
   // 페이지 변경 핸들러
   const handlePageChange = (selectedItem: { selected: number }) => {
     setCurrentPage(selectedItem.selected);
+  };
+
+  // 페이지당 항목 수 변경 핸들러
+  const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newItemsPerPage = parseInt(e.target.value, 10);
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(0); // 페이지당 항목 수 변경 시 첫 페이지로 이동
   };
 
   // 검색어 입력 핸들러
@@ -500,6 +507,19 @@ const InventoryManagement: React.FC = () => {
               {getLocationOptions().map(location => (
                 <option key={location} value={location}>{location}</option>
               ))}
+            </select>
+          </div>
+          
+          <div className="filter-group">
+            <label htmlFor="itemsPerPageFilter">표시 개수:</label>
+            <select
+              id="itemsPerPageFilter"
+              value={itemsPerPage}
+              onChange={handleItemsPerPageChange}
+            >
+              <option value="10">10개</option>
+              <option value="15">15개</option>
+              <option value="20">20개</option>
             </select>
           </div>
         </div>
