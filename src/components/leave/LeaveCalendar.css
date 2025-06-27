@@ -180,7 +180,18 @@
 .fc-col-header-cell {
   background-color: #f8f9fa;
   font-weight: 600;
-  color: #495057;
+}
+
+.fc-col-header-cell .fc-col-header-cell-cushion {
+  color: #495057 !important;  /* 평일 */
+}
+
+.fc-col-header-cell.fc-day-sun .fc-col-header-cell-cushion {
+  color: #dc3545 !important;  /* 일요일 */
+}
+
+.fc-col-header-cell.fc-day-sat .fc-col-header-cell-cushion {
+  color: #007bff !important;  /* 토요일 */
 }
 
 .fc-day-today {
