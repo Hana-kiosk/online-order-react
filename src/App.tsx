@@ -10,6 +10,7 @@ import './App.css';
 import { useNavigate } from 'react-router-dom';
 import InventoryManagement from './components/inventory/InventoryManagement';
 import InventoryForm from './components/inventory/InventoryForm';
+import LeaveCalendar from './components/leave/LeaveCalendar';
 
 // 플랫폼 메인 홈페이지 컴포넌트
 const PlatformHome = () => {
@@ -140,14 +141,14 @@ const LeaveSystemHome = () => {
 };
 
 // 연차 캘린더 컴포넌트
-const LeaveCalendar = () => {
-  return (
-    <div className="page-container">
-      <h1>연차 캘린더</h1>
-      <p>연차 캘린더 페이지입니다.</p>
-    </div>
-  );
-};
+// const LeaveCalendar = () => {
+//   return (
+//     <div className="page-container">
+//       <h1>연차 캘린더</h1>
+//       <p>연차 캘린더 페이지입니다.</p>
+//     </div>
+//   );
+// };
 
 // 연차 신청 컴포넌트
 const LeaveApply = () => {
