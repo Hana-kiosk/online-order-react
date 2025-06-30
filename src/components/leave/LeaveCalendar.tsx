@@ -18,7 +18,7 @@ interface LeaveEvent {
   extendedProps: {
     employeeName: string;
     leaveType: string;
-    status: 'pending' | 'approved' | 'rejected';
+    status: 'pending' | 'approved' | 'rejected' | 'canceled';
     reason?: string;
   };
 }
@@ -26,7 +26,7 @@ interface LeaveEvent {
 interface EventModalData {
   employeeName: string;
   leaveType: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | 'canceled';
   reason?: string;
   period: string;
   days: number;
@@ -72,6 +72,8 @@ const LeaveCalendar: React.FC = () => {
           return { bg: '#28a745', border: '#28a745' };
         case 'rejected':
           return { bg: '#dc3545', border: '#dc3545' };
+        case 'canceled':
+          return { bg: '#6c757d', border: '#6c757d' };
         case 'pending':
         default:
           return { bg: '#ffc107', border: '#ffc107' };
@@ -110,8 +112,13 @@ const LeaveCalendar: React.FC = () => {
         // 모든 연차 데이터 조회 (모든 사용자가 전체 연차를 볼 수 있음)
         const leaveList = await leaveApi.getLeaveList(); // 모든 데이터 조회
         
+        // 취소된 연차와 반려된 연차는 캘린더에서 제외 (승인된 연차와 대기중인 연차만 표시)
+        const activeLeaves = leaveList.filter((leave: LeaveData) => 
+          leave.status !== 'canceled' && leave.status !== 'rejected'
+        );
+        
         // 연차 데이터를 캘린더 이벤트로 변환
-        const calendarEvents = leaveList.map(convertLeaveToEvent);
+        const calendarEvents = activeLeaves.map(convertLeaveToEvent);
         setEvents(calendarEvents);
       } catch (error) {
         console.error('연차 데이터 조회 오류:', error);
@@ -183,6 +190,7 @@ const LeaveCalendar: React.FC = () => {
       case 'approved': return '승인됨';
       case 'pending': return '대기중';
       case 'rejected': return '반려됨';
+      case 'canceled': return '취소됨';
       default: return '알 수 없음';
     }
   };
@@ -239,10 +247,6 @@ const LeaveCalendar: React.FC = () => {
         <div className="legend-item">
           <span className="legend-color pending"></span>
           <span>대기 중인 연차</span>
-        </div>
-        <div className="legend-item">
-          <span className="legend-color rejected"></span>
-          <span>반려된 연차</span>
         </div>
       </div>
 
