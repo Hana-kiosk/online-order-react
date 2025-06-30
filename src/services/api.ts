@@ -375,9 +375,14 @@ export const leaveApi = {
   },
 
   // 연차 상태 업데이트 (관리자용)
-  async updateLeaveStatus(leaveId: string, status: 'approved' | 'rejected') {
+  async updateLeaveStatus(leaveId: string, status: 'approved' | 'rejected', rejectionReason?: string) {
     try {
-      const response = await apiClient.put(`/leave/${leaveId}/status`, { status });
+      const requestData: { status: 'approved' | 'rejected'; rejection_reason?: string } = { status };
+      if (status === 'rejected' && rejectionReason) {
+        requestData.rejection_reason = rejectionReason;
+      }
+      
+      const response = await apiClient.put(`/leave/${leaveId}/status`, requestData);
       return response.data;
     } catch (error) {
       console.error('연차 상태 업데이트 오류:', error);
