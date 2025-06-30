@@ -283,7 +283,7 @@ export interface LeaveData {
   startDate: Date | null;
   endDate: Date | null;
   reason: string;
-  status?: 'pending' | 'approved' | 'rejected';
+  status?: 'pending' | 'approved' | 'rejected' | 'canceled';
   appliedAt?: string;
   reviewedAt?: string | undefined;
   reviewedBy?: string | undefined;
@@ -298,7 +298,7 @@ export interface ServerLeave {
   start_date: string;
   end_date: string;
   reason: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | 'canceled';
   created_at: string;
   updated_at: string | null;
   approved_at: string | null;
@@ -375,9 +375,9 @@ export const leaveApi = {
   },
 
   // 연차 상태 업데이트 (관리자용)
-  async updateLeaveStatus(leaveId: string, status: 'approved' | 'rejected', rejectionReason?: string) {
+  async updateLeaveStatus(leaveId: string, status: 'approved' | 'rejected' | 'canceled', rejectionReason?: string) {
     try {
-      const requestData: { status: 'approved' | 'rejected'; rejection_reason?: string } = { status };
+      const requestData: { status: 'approved' | 'rejected' | 'canceled'; rejection_reason?: string } = { status };
       if (status === 'rejected' && rejectionReason) {
         requestData.rejection_reason = rejectionReason;
       }

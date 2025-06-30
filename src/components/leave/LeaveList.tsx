@@ -19,7 +19,7 @@ const LeaveList: React.FC = () => {
         setError('');
         
         // 현재 사용자의 연차 목록만 조회
-        const leaveList = await leaveApi.getLeaveList(user?.id.toString());
+        const leaveList = await leaveApi.getLeaveList(user?.id?.toString());
         setLeaves(leaveList);
       } catch (error) {
         console.error('연차 목록 조회 오류:', error);
@@ -41,6 +41,8 @@ const LeaveList: React.FC = () => {
         return 'status-approved';
       case 'rejected':
         return 'status-rejected';
+      case 'canceled':
+        return 'status-canceled';
       case 'pending':
       default:
         return 'status-pending';
@@ -54,6 +56,8 @@ const LeaveList: React.FC = () => {
         return '승인됨';
       case 'rejected':
         return '반려됨';
+      case 'canceled':
+        return '취소됨';
       case 'pending':
       default:
         return '대기중';
@@ -112,7 +116,42 @@ const LeaveList: React.FC = () => {
     total: leaves.length,
     pending: leaves.filter(l => l.status === 'pending').length,
     approved: leaves.filter(l => l.status === 'approved').length,
-    rejected: leaves.filter(l => l.status === 'rejected').length
+    rejected: leaves.filter(l => l.status === 'rejected').length,
+    canceled: leaves.filter(l => l.status === 'canceled').length
+  };
+
+  // 연차 취소 기능
+  const handleCancelLeave = async (leaveId: string | undefined) => {
+    if (!leaveId) return;
+    
+    if (!window.confirm('정말로 연차 신청을 취소하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      await leaveApi.updateLeaveStatus(leaveId, 'canceled');
+      
+      // 목록 새로고침
+      const leaveList = await leaveApi.getLeaveList(user?.id?.toString());
+      setLeaves(leaveList);
+      
+      alert('연차 신청이 취소되었습니다.');
+    } catch (error) {
+      console.error('연차 취소 오류:', error);
+      alert('취소 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
+    }
+  };
+
+  // 취소 가능 여부 확인
+  const canCancelLeave = (leave: LeaveData): boolean => {
+    if (leave.status !== 'pending') return false;
+    
+    // 휴가 시작일이 오늘 이후인 경우에만 취소 가능
+    if (leave.startDate && new Date(leave.startDate) <= new Date()) {
+      return false;
+    }
+    
+    return true;
   };
 
   if (loading) {
@@ -177,6 +216,10 @@ const LeaveList: React.FC = () => {
           <div className="stat-number">{stats.rejected}</div>
           <div className="stat-label">반려됨</div>
         </div>
+        <div className="stat-card canceled">
+          <div className="stat-number">{stats.canceled}</div>
+          <div className="stat-label">취소됨</div>
+        </div>
       </div>
 
       {leaves.length === 0 ? (
@@ -203,6 +246,7 @@ const LeaveList: React.FC = () => {
                   <th>일수</th>
                   <th>상태</th>
                   <th>사유</th>
+                  <th>취소</th>
                 </tr>
               </thead>
               <tbody>
@@ -232,6 +276,16 @@ const LeaveList: React.FC = () => {
                       <div className="reason-cell">
                         {leave.reason || '사유 없음'}
                       </div>
+                    </td>
+                    <td>
+                      {canCancelLeave(leave) && leave.id && (
+                        <button 
+                          className="btn-secondary"
+                          onClick={() => handleCancelLeave(leave.id)}
+                        >
+                          취소
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
