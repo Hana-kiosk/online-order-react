@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useAuth } from '../../auth/AuthContext';
@@ -16,6 +16,7 @@ interface LeaveFormData {
 
 const LeaveApply: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const preselectedDate = searchParams.get('date');
@@ -52,6 +53,23 @@ const LeaveApply: React.FC = () => {
       }));
     }
   }, [preselectedDate]);
+
+  // URL 쿼리 파라미터에서 날짜 가져오기
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const dateParam = urlParams.get('date');
+    
+    if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+      const selectedDate = new Date(dateParam);
+      if (!isNaN(selectedDate.getTime())) {
+        setFormData(prev => ({
+          ...prev,
+          startDate: selectedDate,
+          endDate: selectedDate
+        }));
+      }
+    }
+  }, [location.search]);
 
   // 입력 필드 변경 핸들러
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {

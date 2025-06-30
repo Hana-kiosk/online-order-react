@@ -4,6 +4,8 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
 import { EventClickArg } from '@fullcalendar/core';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../auth/AuthContext';
+import { leaveApi, LeaveData } from '../../services/api';
 import './LeaveCalendar.css';
 
 interface LeaveEvent {
@@ -31,88 +33,75 @@ interface EventModalData {
 
 const LeaveCalendar: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [events, setEvents] = useState<LeaveEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalData, setModalData] = useState<EventModalData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [error, setError] = useState<string>('');
 
-  // 샘플 연차 데이터
-  useEffect(() => {
-    // 실제로는 API에서 데이터를 가져올 예정
-    const sampleEvents: LeaveEvent[] = [
-      {
-        id: '1',
-        title: '김철수 - 연차',
-        start: '2024-01-15',
-        backgroundColor: '#28a745',
-        borderColor: '#28a745',
-        extendedProps: {
-          employeeName: '김철수',
-          leaveType: '연차',
-          status: 'approved',
-          reason: '가족 여행'
-        }
-      },
-      {
-        id: '2',
-        title: '이영희 - 반차',
-        start: '2024-01-18',
-        backgroundColor: '#17a2b8',
-        borderColor: '#17a2b8',
-        extendedProps: {
-          employeeName: '이영희',
-          leaveType: '반차',
-          status: 'approved',
-          reason: '병원 진료'
-        }
-      },
-      {
-        id: '3',
-        title: '박민수 - 연차 (대기중)',
-        start: '2025-01-22',
-        end: '2025-01-22',
-        backgroundColor: '#ffc107',
-        borderColor: '#ffc107',
-        extendedProps: {
-          employeeName: '박민수',
-          leaveType: '연차',
-          status: 'pending',
-          reason: '개인 사정'
-        }
-      },
-      {
-        id: '4',
-        title: '정민정 - 병가',
-        start: '2024-01-25',
-        backgroundColor: '#dc3545',
-        borderColor: '#dc3545',
-        extendedProps: {
-          employeeName: '정민정',
-          leaveType: '병가',
-          status: 'approved',
-          reason: '몸살감기'
-        }
-      },
-      {
-        id: '5',
-        title: '정민정 - 병가',
-        start: '2025-01-25',
-        backgroundColor: '#dc3545',
-        borderColor: '#dc3545',
-        extendedProps: {
-          employeeName: '정민정',
-          leaveType: '병가',
-          status: 'approved',
-          reason: '몸살감기'
-        }
+  // 연차 데이터를 캘린더 이벤트로 변환
+  const convertLeaveToEvent = (leave: LeaveData): LeaveEvent => {
+    // 상태별 색상 설정
+    const getStatusColor = (status: string) => {
+      switch (status) {
+        case 'approved':
+          return { bg: '#28a745', border: '#28a745' };
+        case 'rejected':
+          return { bg: '#dc3545', border: '#dc3545' };
+        case 'pending':
+        default:
+          return { bg: '#ffc107', border: '#ffc107' };
       }
-    ];
+    };
 
-    setTimeout(() => {
-      setEvents(sampleEvents);
-      setLoading(false);
-    }, 500);
-  }, []);
+    const colors = getStatusColor(leave.status || 'pending');
+    const statusText = leave.status === 'pending' ? ' (대기중)' : '';
+
+    return {
+      id: leave.id || '',
+      title: `${leave.name} - ${leave.leaveType}${statusText}`,
+      start: leave.startDate ? leave.startDate.toISOString().split('T')[0] : '',
+      end: leave.endDate ? 
+        // FullCalendar의 end는 exclusive이므로 하루 추가
+        new Date(leave.endDate.getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] : 
+        undefined,
+      backgroundColor: colors.bg,
+      borderColor: colors.border,
+      extendedProps: {
+        employeeName: leave.name,
+        leaveType: leave.leaveType,
+        status: leave.status || 'pending',
+        reason: leave.reason
+      }
+    };
+  };
+
+  // 연차 데이터 조회
+  useEffect(() => {
+    const fetchLeaves = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        
+        // 모든 연차 데이터 조회 (모든 사용자가 전체 연차를 볼 수 있음)
+        const leaveList = await leaveApi.getLeaveList(); // 모든 데이터 조회
+        
+        // 연차 데이터를 캘린더 이벤트로 변환
+        const calendarEvents = leaveList.map(convertLeaveToEvent);
+        setEvents(calendarEvents);
+      } catch (error) {
+        console.error('연차 데이터 조회 오류:', error);
+        setError('연차 데이터를 불러오는 중 오류가 발생했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user?.id) {
+      fetchLeaves();
+    }
+  }, [user?.id]);
 
   // 날짜 클릭 핸들러 - 연차 신청 페이지로 이동
   const handleDateClick = (info: DateClickArg) => {
@@ -128,12 +117,12 @@ const LeaveCalendar: React.FC = () => {
     // 실제 표시되는 기간 계산 (FullCalendar의 end는 exclusive이므로)
     let periodText = '';
     if (event.start) {
-      const startDate = event.start.toLocaleDateString();
+      const startDate = event.start.toLocaleDateString('ko-KR');
       if (event.end) {
         // end 날짜에서 하루를 빼서 실제 마지막 날 계산
         const actualEndDate = new Date(event.end);
         actualEndDate.setDate(actualEndDate.getDate() - 1);
-        const endDate = actualEndDate.toLocaleDateString();
+        const endDate = actualEndDate.toLocaleDateString('ko-KR');
         periodText = startDate === endDate ? startDate : `${startDate} ~ ${endDate}`;
       } else {
         periodText = startDate;
@@ -172,6 +161,22 @@ const LeaveCalendar: React.FC = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="leave-calendar-container">
+        <div className="error-message">
+          <p>{error}</p>
+          <button 
+            className="btn-primary" 
+            onClick={() => window.location.reload()}
+          >
+            다시 시도
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="leave-calendar-container">
       <div className="calendar-header">
@@ -202,12 +207,8 @@ const LeaveCalendar: React.FC = () => {
           <span>대기 중인 연차</span>
         </div>
         <div className="legend-item">
-          <span className="legend-color sick"></span>
-          <span>병가</span>
-        </div>
-        <div className="legend-item">
-          <span className="legend-color half"></span>
-          <span>반차</span>
+          <span className="legend-color rejected"></span>
+          <span>반려된 연차</span>
         </div>
       </div>
 
@@ -241,6 +242,7 @@ const LeaveCalendar: React.FC = () => {
           <li>날짜를 클릭하면 해당 날짜에 연차를 신청할 수 있습니다.</li>
           <li>연차 이벤트를 클릭하면 상세 정보를 확인할 수 있습니다.</li>
           <li>색상별로 연차 상태를 구분할 수 있습니다.</li>
+          <li>모든 직원의 연차 일정을 확인할 수 있습니다.</li>
         </ul>
       </div>
 
