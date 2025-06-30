@@ -70,7 +70,7 @@ const LeaveCalendar: React.FC = () => {
         id: '3',
         title: '박민수 - 연차 (대기중)',
         start: '2025-01-22',
-        end: '2025-01-29',
+        end: '2025-01-22',
         backgroundColor: '#ffc107',
         borderColor: '#ffc107',
         extendedProps: {
