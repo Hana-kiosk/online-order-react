@@ -30,7 +30,10 @@ const LeaveAdmin: React.FC = () => {
         
         // 모든 연차 목록 조회 (관리자용)
         const leaveList = await leaveApi.getLeaveList();
-        setLeaves(leaveList);
+        
+        // 취소된 연차는 관리자 페이지에서 제외
+        const activeLeaves = leaveList.filter((leave: LeaveData) => leave.status !== 'canceled');
+        setLeaves(activeLeaves);
       } catch (error) {
         console.error('연차 목록 조회 오류:', error);
         setError('연차 목록을 불러오는 중 오류가 발생했습니다.');
@@ -49,6 +52,9 @@ const LeaveAdmin: React.FC = () => {
 
   // 필터링된 연차 목록
   const filteredLeaves = leaves.filter(leave => {
+    // 취소된 연차는 관리자 페이지에서 제외
+    if (leave.status === 'canceled') return false;
+    
     const matchesFilter = filter === 'all' || leave.status === filter;
     const matchesSearch = searchTerm === '' || 
       leave.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -161,7 +167,10 @@ const LeaveAdmin: React.FC = () => {
       
       // 목록 새로고침
       const leaveList = await leaveApi.getLeaveList();
-      setLeaves(leaveList);
+      
+      // 취소된 연차는 관리자 페이지에서 제외
+      const activeLeaves = leaveList.filter((leave: LeaveData) => leave.status !== 'canceled');
+      setLeaves(activeLeaves);
       
       setIsModalOpen(false);
       setModalData(null);

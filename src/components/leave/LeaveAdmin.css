@@ -63,6 +63,10 @@
   border-left-color: #dc3545;
 }
 
+.stat-card.canceled {
+  border-left-color: #6c757d;
+}
+
 .stat-number {
   font-size: 2.5rem;
   font-weight: 700;
@@ -233,6 +237,12 @@
   background-color: #f8d7da;
   color: #721c24;
   border: 1px solid #f5c6cb;
+}
+
+.status-badge.status-canceled {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
 }
 
 /* 사유 셀 스타일 */
