@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useAuth } from '../../auth/AuthContext';
+import { leaveApi, LeaveData } from '../../services/api';
 import './LeaveApply.css';
 
 interface LeaveFormData {
@@ -91,7 +92,9 @@ const LeaveApply: React.FC = () => {
     const leaveType = e.target.value;
     setFormData(prev => ({
       ...prev,
-      leaveType
+      leaveType,
+      // 연차 선택 시 사유 필드 초기화
+      reason: leaveType === '연가' ? '' : prev.reason
     }));
   };
 
@@ -135,17 +138,39 @@ const LeaveApply: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // 실제로는 API 호출을 할 예정
-      console.log('연차 신청 데이터:', formData);
+      // API 요청 데이터 준비
+      const leaveRequestData: LeaveData = {
+        userid: user?.id.toString() || '',
+        name: user?.name || '',
+        leaveType: formData.leaveType,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        reason: formData.reason
+      };
+
+      console.log('연차 신청 데이터:', leaveRequestData);
       
-      // 임시로 2초 대기
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // 연차 신청 API 호출
+      const result = await leaveApi.applyLeave(leaveRequestData);
       
+      console.log('연차 신청 결과:', result);
       alert('연차 신청이 완료되었습니다!');
       navigate('/leave-system/list');
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('연차 신청 중 오류 발생:', error);
-      alert('연차 신청 중 오류가 발생했습니다. 다시 시도해주세요.');
+      
+      // 에러 메시지 처리
+      let errorMessage = '연차 신청 중 오류가 발생했습니다.';
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
+        if (axiosError.response?.data?.message) {
+          errorMessage = axiosError.response.data.message;
+        } else if (axiosError.message) {
+          errorMessage = axiosError.message;
+        }
+      }
+      
+      alert(errorMessage + ' 다시 시도해주세요.');
     } finally {
       setIsSubmitting(false);
     }
