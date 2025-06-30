@@ -206,14 +206,28 @@ const LeaveApply: React.FC = () => {
     setErrors({});
   };
 
-  // 날짜 계산 (휴가 일수)
+  // 날짜 계산 (휴가 일수) - 주말 제외
   const calculateLeaveDays = (): number => {
     if (!formData.startDate || !formData.endDate) return 0;
     
-    const timeDiff = formData.endDate.getTime() - formData.startDate.getTime();
-    const dayDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
+    let count = 0;
+    const currentDate = new Date(formData.startDate);
+    const endDate = new Date(formData.endDate);
     
-    return dayDiff;
+    // 시작일부터 종료일까지 반복하면서 평일만 카운트
+    while (currentDate <= endDate) {
+      const dayOfWeek = currentDate.getDay(); // 0: 일요일, 6: 토요일
+      
+      // 평일(월-금)인 경우에만 카운트
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        count++;
+      }
+      
+      // 다음 날로 이동
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    return count;
   };
 
   return (

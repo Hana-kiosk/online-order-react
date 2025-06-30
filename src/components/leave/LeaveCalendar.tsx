@@ -29,6 +29,7 @@ interface EventModalData {
   status: 'pending' | 'approved' | 'rejected';
   reason?: string;
   period: string;
+  days: number;
 }
 
 const LeaveCalendar: React.FC = () => {
@@ -39,6 +40,28 @@ const LeaveCalendar: React.FC = () => {
   const [modalData, setModalData] = useState<EventModalData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState<string>('');
+
+  // 주말을 제외한 일수 계산 함수
+  const calculateBusinessDays = (startDate: Date, endDate: Date): number => {
+    let count = 0;
+    const currentDate = new Date(startDate);
+    const end = new Date(endDate);
+    
+    // 시작일부터 종료일까지 반복하면서 평일만 카운트
+    while (currentDate <= end) {
+      const dayOfWeek = currentDate.getDay(); // 0: 일요일, 6: 토요일
+      
+      // 평일(월-금)인 경우에만 카운트
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        count++;
+      }
+      
+      // 다음 날로 이동
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    return count;
+  };
 
   // 연차 데이터를 캘린더 이벤트로 변환
   const convertLeaveToEvent = (leave: LeaveData): LeaveEvent => {
@@ -116,16 +139,26 @@ const LeaveCalendar: React.FC = () => {
     
     // 실제 표시되는 기간 계산 (FullCalendar의 end는 exclusive이므로)
     let periodText = '';
+    let days = 0;
+    
     if (event.start) {
       const startDate = event.start.toLocaleDateString('ko-KR');
+      const actualStartDate = new Date(event.start);
+      
       if (event.end) {
         // end 날짜에서 하루를 빼서 실제 마지막 날 계산
         const actualEndDate = new Date(event.end);
         actualEndDate.setDate(actualEndDate.getDate() - 1);
         const endDate = actualEndDate.toLocaleDateString('ko-KR');
         periodText = startDate === endDate ? startDate : `${startDate} ~ ${endDate}`;
+        
+        // 주말을 제외한 일수 계산
+        days = calculateBusinessDays(actualStartDate, actualEndDate);
       } else {
         periodText = startDate;
+        // 단일 날짜인 경우 해당 날짜가 평일인지 확인
+        const dayOfWeek = actualStartDate.getDay();
+        days = (dayOfWeek !== 0 && dayOfWeek !== 6) ? 1 : 0;
       }
     }
     
@@ -134,7 +167,8 @@ const LeaveCalendar: React.FC = () => {
       leaveType: props.leaveType,
       status: props.status,
       reason: props.reason,
-      period: periodText
+      period: periodText,
+      days: days
     });
     setIsModalOpen(true);
   };
@@ -233,6 +267,9 @@ const LeaveCalendar: React.FC = () => {
           weekends={true}
           selectable={true}
           selectMirror={true}
+          dayCellContent={(args) => {
+            return args.dayNumberText.replace('일', '');
+          }}
         />
       </div>
 
@@ -274,6 +311,10 @@ const LeaveCalendar: React.FC = () => {
               <div className="info-row">
                 <span className="info-label">기간:</span>
                 <span className="info-value">{modalData.period}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">일수:</span>
+                <span className="info-value">{modalData.days}일</span>
               </div>
               {modalData.reason && (
                 <div className="info-row">

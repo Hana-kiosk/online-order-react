@@ -176,6 +176,60 @@
   text-overflow: ellipsis;
 }
 
+/* 요일별 색상 설정 */
+/* 헤더의 요일 이름 색상 */
+.fc-col-header-cell .fc-col-header-cell-cushion {
+  color: #333 !important; /* 기본 평일 색상 */
+  font-weight: 600;
+}
+
+.fc-col-header-cell.fc-day-sun .fc-col-header-cell-cushion {
+  color: #dc3545 !important; /* 일요일 - 빨간색 */
+}
+
+.fc-col-header-cell.fc-day-sat .fc-col-header-cell-cushion {
+  color: #007bff !important; /* 토요일 - 파란색 */
+}
+
+/* 날짜 숫자 색상 */
+.fc-daygrid-day-number {
+  color: #333; /* 기본 평일 색상 */
+  font-weight: 500;
+}
+
+.fc-day-sun .fc-daygrid-day-number {
+  color: #dc3545 !important; /* 일요일 - 빨간색 */
+  font-weight: 500; /* 일반 글씨 */
+}
+
+.fc-day-sat .fc-daygrid-day-number {
+  color: #007bff !important; /* 토요일 - 파란색 */
+  font-weight: 500; /* 일반 글씨 */
+}
+
+/* 오늘 날짜가 주말인 경우 색상 우선순위 조정 */
+.fc-day-today {
+  background-color: #fff3cd !important;
+}
+
+.fc-day-today .fc-daygrid-day-number {
+  color: #856404 !important;
+  font-weight: 700;
+  background-color: rgba(255, 193, 7, 0.2);
+  border-radius: 3px;
+  padding: 2px 4px;
+}
+
+.fc-day-today.fc-day-sun .fc-daygrid-day-number {
+  color: #dc3545 !important;
+  background-color: rgba(220, 53, 69, 0.2) !important;
+}
+
+.fc-day-today.fc-day-sat .fc-daygrid-day-number {
+  color: #007bff !important;
+  background-color: rgba(0, 123, 255, 0.2) !important;
+}
+
 /* 도움말 섹션 */
 .calendar-help {
   background: white;
@@ -297,16 +351,31 @@
 .info-value.status-approved {
   color: #28a745;
   font-weight: 600;
+  background-color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #28a745;
+  display: inline-block;
 }
 
 .info-value.status-pending {
   color: #ffc107;
   font-weight: 600;
+  background-color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #ffc107;
+  display: inline-block;
 }
 
 .info-value.status-rejected {
   color: #dc3545;
   font-weight: 600;
+  background-color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #dc3545;
+  display: inline-block;
 }
 
 .modal-footer {
