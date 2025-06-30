@@ -293,15 +293,16 @@ export interface LeaveData {
 export interface ServerLeave {
   id: string;
   userid: string;
-  name: string;
+  employee_name: string;
   leave_type: string;
   start_date: string;
   end_date: string;
   reason: string;
   status: 'pending' | 'approved' | 'rejected';
-  applied_at: string;
-  reviewed_at: string | null;
-  reviewed_by: string | null;
+  created_at: string;
+  updated_at: string | null;
+  approved_at: string | null;
+  approver_name: string | null;
 }
 
 // 서버 응답 데이터를 클라이언트 데이터로 변환 (연차)
@@ -309,15 +310,15 @@ const convertServerLeaveToClient = (serverLeave: ServerLeave): LeaveData => {
   return {
     id: serverLeave.id,
     userid: serverLeave.userid,
-    name: serverLeave.name,
+    name: serverLeave.employee_name,
     leaveType: serverLeave.leave_type,
     startDate: serverLeave.start_date ? new Date(serverLeave.start_date) : null,
     endDate: serverLeave.end_date ? new Date(serverLeave.end_date) : null,
     reason: serverLeave.reason,
     status: serverLeave.status,
-    appliedAt: serverLeave.applied_at,
-    reviewedAt: serverLeave.reviewed_at || undefined,
-    reviewedBy: serverLeave.reviewed_by || undefined
+    appliedAt: serverLeave.created_at,
+    reviewedAt: serverLeave.approved_at || undefined,
+    reviewedBy: serverLeave.approver_name || undefined
   };
 };
 

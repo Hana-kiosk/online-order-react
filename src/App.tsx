@@ -13,6 +13,7 @@ import InventoryForm from './components/inventory/InventoryForm';
 import LeaveCalendar from './components/leave/LeaveCalendar';
 import LeaveApply from './components/leave/LeaveApply';
 import LeaveAdmin from './components/leave/LeaveAdmin';
+import LeaveList from './components/leave/LeaveList';
 
 // 플랫폼 메인 홈페이지 컴포넌트
 const PlatformHome = () => {
@@ -142,35 +143,6 @@ const LeaveSystemHome = () => {
   );
 };
 
-// 연차 캘린더 컴포넌트
-// const LeaveCalendar = () => {
-//   return (
-//     <div className="page-container">
-//       <h1>연차 캘린더</h1>
-//       <p>연차 캘린더 페이지입니다.</p>
-//     </div>
-//   );
-// };
-
-// 연차 신청 컴포넌트
-// const LeaveApply = () => {
-//   return (
-//     <div className="page-container">
-//       <h1>연차 신청</h1>
-//       <p>연차 신청 페이지입니다.</p>
-//     </div>
-//   );
-// };
-
-// 연차 신청 내역 컴포넌트
-const LeaveList = () => {
-  return (
-    <div className="page-container">
-      <h1>연차 신청 내역</h1>
-      <p>연차 신청 내역 페이지입니다.</p>
-    </div>
-  );
-};
 
 function App() {
   return (
