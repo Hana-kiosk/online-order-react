@@ -107,6 +107,14 @@ const LeaveList: React.FC = () => {
     return count;
   };
 
+  // 통계 계산
+  const stats = {
+    total: leaves.length,
+    pending: leaves.filter(l => l.status === 'pending').length,
+    approved: leaves.filter(l => l.status === 'approved').length,
+    rejected: leaves.filter(l => l.status === 'rejected').length
+  };
+
   if (loading) {
     return (
       <div className="leave-list-container">
@@ -151,6 +159,26 @@ const LeaveList: React.FC = () => {
         </div>
       </div>
 
+      {/* 통계 섹션 */}
+      <div className="admin-stats">
+        <div className="stat-card">
+          <div className="stat-number">{stats.total}</div>
+          <div className="stat-label">전체 신청</div>
+        </div>
+        <div className="stat-card pending">
+          <div className="stat-number">{stats.pending}</div>
+          <div className="stat-label">승인 대기</div>
+        </div>
+        <div className="stat-card approved">
+          <div className="stat-number">{stats.approved}</div>
+          <div className="stat-label">승인됨</div>
+        </div>
+        <div className="stat-card rejected">
+          <div className="stat-number">{stats.rejected}</div>
+          <div className="stat-label">반려됨</div>
+        </div>
+      </div>
+
       {leaves.length === 0 ? (
         <div className="no-data">
           <div className="no-data-icon">📝</div>
@@ -165,31 +193,6 @@ const LeaveList: React.FC = () => {
         </div>
       ) : (
         <div className="leave-list-content">
-          <div className="list-stats">
-            <div className="stat-item">
-              <span className="stat-number">{leaves.length}</span>
-              <span className="stat-label">총 신청</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-number">
-                {leaves.filter(leave => leave.status === 'approved').length}
-              </span>
-              <span className="stat-label">승인됨</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-number">
-                {leaves.filter(leave => leave.status === 'pending').length}
-              </span>
-              <span className="stat-label">대기중</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-number">
-                {leaves.filter(leave => leave.status === 'rejected').length}
-              </span>
-              <span className="stat-label">반려됨</span>
-            </div>
-          </div>
-
           <div className="leave-table-container">
             <table className="leave-table">
               <thead>
