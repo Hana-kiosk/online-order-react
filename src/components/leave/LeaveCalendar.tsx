@@ -21,10 +21,20 @@ interface LeaveEvent {
   };
 }
 
+interface EventModalData {
+  employeeName: string;
+  leaveType: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reason?: string;
+  period: string;
+}
+
 const LeaveCalendar: React.FC = () => {
   const navigate = useNavigate();
   const [events, setEvents] = useState<LeaveEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [modalData, setModalData] = useState<EventModalData | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // 샘플 연차 데이터
   useEffect(() => {
@@ -59,8 +69,8 @@ const LeaveCalendar: React.FC = () => {
       {
         id: '3',
         title: '박민수 - 연차 (대기중)',
-        start: '2024-01-22',
-        end: '2024-01-25',
+        start: '2025-01-22',
+        end: '2025-01-29',
         backgroundColor: '#ffc107',
         borderColor: '#ffc107',
         extendedProps: {
@@ -74,6 +84,19 @@ const LeaveCalendar: React.FC = () => {
         id: '4',
         title: '정민정 - 병가',
         start: '2024-01-25',
+        backgroundColor: '#dc3545',
+        borderColor: '#dc3545',
+        extendedProps: {
+          employeeName: '정민정',
+          leaveType: '병가',
+          status: 'approved',
+          reason: '몸살감기'
+        }
+      },
+      {
+        id: '5',
+        title: '정민정 - 병가',
+        start: '2025-01-25',
         backgroundColor: '#dc3545',
         borderColor: '#dc3545',
         extendedProps: {
@@ -97,7 +120,7 @@ const LeaveCalendar: React.FC = () => {
     navigate(`/leave-system/apply?date=${selectedDate}`);
   };
 
-  // 이벤트 클릭 핸들러 - 연차 상세 정보 표시
+  // 이벤트 클릭 핸들러 - 연차 상세 정보 모달 표시
   const handleEventClick = (info: EventClickArg) => {
     const event = info.event;
     const props = event.extendedProps;
@@ -117,14 +140,19 @@ const LeaveCalendar: React.FC = () => {
       }
     }
     
-    alert(`
-연차 정보:
-직원: ${props.employeeName}
-휴가 종류: ${props.leaveType}
-상태: ${getStatusText(props.status)}
-사유: ${props.reason || '없음'}
-기간: ${periodText}
-    `);
+    setModalData({
+      employeeName: props.employeeName,
+      leaveType: props.leaveType,
+      status: props.status,
+      reason: props.reason,
+      period: periodText
+    });
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setModalData(null);
   };
 
   const getStatusText = (status: string) => {
@@ -215,6 +243,51 @@ const LeaveCalendar: React.FC = () => {
           <li>색상별로 연차 상태를 구분할 수 있습니다.</li>
         </ul>
       </div>
+
+      {/* 이벤트 상세 정보 모달 */}
+      {isModalOpen && modalData && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>연차 정보</h3>
+              <button className="modal-close" onClick={closeModal}>
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="info-row">
+                <span className="info-label">직원명:</span>
+                <span className="info-value">{modalData.employeeName}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">휴가 종류:</span>
+                <span className="info-value">{modalData.leaveType}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">상태:</span>
+                <span className={`info-value status-${modalData.status}`}>
+                  {getStatusText(modalData.status)}
+                </span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">기간:</span>
+                <span className="info-value">{modalData.period}</span>
+              </div>
+              {modalData.reason && (
+                <div className="info-row">
+                  <span className="info-label">사유:</span>
+                  <span className="info-value">{modalData.reason}</span>
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={closeModal}>
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

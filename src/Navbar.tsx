@@ -153,6 +153,16 @@ const Navbar = () => {
                                 연차 신청 내역
                             </NavLink>
                         </li>
+                        {user?.role === 'admin' && (
+                            <li>
+                                <NavLink
+                                    to="/leave-system/admin"
+                                    className={({ isActive }) => isActive ? 'active' : ''}
+                                >
+                                    연차 관리 (관리자)
+                                </NavLink>
+                            </li>
+                        )}
                     </>
                 )}
             </ul>

@@ -11,6 +11,8 @@ import { useNavigate } from 'react-router-dom';
 import InventoryManagement from './components/inventory/InventoryManagement';
 import InventoryForm from './components/inventory/InventoryForm';
 import LeaveCalendar from './components/leave/LeaveCalendar';
+import LeaveApply from './components/leave/LeaveApply';
+import LeaveAdmin from './components/leave/LeaveAdmin';
 
 // 플랫폼 메인 홈페이지 컴포넌트
 const PlatformHome = () => {
@@ -151,14 +153,14 @@ const LeaveSystemHome = () => {
 // };
 
 // 연차 신청 컴포넌트
-const LeaveApply = () => {
-  return (
-    <div className="page-container">
-      <h1>연차 신청</h1>
-      <p>연차 신청 페이지입니다.</p>
-    </div>
-  );
-};
+// const LeaveApply = () => {
+//   return (
+//     <div className="page-container">
+//       <h1>연차 신청</h1>
+//       <p>연차 신청 페이지입니다.</p>
+//     </div>
+//   );
+// };
 
 // 연차 신청 내역 컴포넌트
 const LeaveList = () => {
@@ -343,6 +345,20 @@ function App() {
                   <Navbar />
                   <div className="content">
                     <LeaveList />
+                  </div>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/leave-system/admin"
+            element={
+              <ProtectedRoute>
+                <div className="app-container">
+                  <Navbar />
+                  <div className="content">
+                    <LeaveAdmin />
                   </div>
                 </div>
               </ProtectedRoute>
