@@ -440,7 +440,7 @@
 }
 
 .rejection-reason textarea {
-  width: 100%;
+  width: calc(100% - 10px);
   padding: 12px;
   border: 2px solid #e9ecef;
   border-radius: 8px;
@@ -448,6 +448,7 @@
   font-family: inherit;
   resize: vertical;
   transition: border-color 0.2s ease;
+  box-sizing: border-box;
 }
 
 .rejection-reason textarea:focus {
