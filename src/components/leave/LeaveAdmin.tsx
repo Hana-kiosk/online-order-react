@@ -92,6 +92,8 @@ const LeaveAdmin: React.FC = () => {
         return '승인됨';
       case 'rejected':
         return '반려됨';
+      case 'canceled':
+        return '취소됨';
       case 'pending':
       default:
         return '대기중';
@@ -99,17 +101,22 @@ const LeaveAdmin: React.FC = () => {
   };
 
   // 날짜 포맷팅
-  const formatDate = (date: Date | null): string => {
+  const formatDate = (date: Date | string | null): string => {
     if (!date) return '-';
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    });
+    try {
+      const dateObj = date instanceof Date ? date : new Date(date);
+      return dateObj.toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+    } catch {
+      return '-';
+    }
   };
 
   // 기간 계산
-  const calculatePeriod = (startDate: Date | null, endDate: Date | null): string => {
+  const calculatePeriod = (startDate: Date | string | null, endDate: Date | string | null): string => {
     if (!startDate || !endDate) return '-';
     
     const start = formatDate(startDate);
@@ -122,22 +129,26 @@ const LeaveAdmin: React.FC = () => {
   };
 
   // 일수 계산 - 주말 제외
-  const calculateDays = (startDate: Date | null, endDate: Date | null): number => {
+  const calculateDays = (startDate: Date | string | null, endDate: Date | string | null): number => {
     if (!startDate || !endDate) return 0;
     
-    let count = 0;
-    const currentDate = new Date(startDate);
-    const end = new Date(endDate);
-    
-    while (currentDate <= end) {
-      const dayOfWeek = currentDate.getDay();
-      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-        count++;
+    try {
+      let count = 0;
+      const currentDate = new Date(startDate instanceof Date ? startDate : new Date(startDate));
+      const end = new Date(endDate instanceof Date ? endDate : new Date(endDate));
+      
+      while (currentDate <= end) {
+        const dayOfWeek = currentDate.getDay();
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+          count++;
+        }
+        currentDate.setDate(currentDate.getDate() + 1);
       }
-      currentDate.setDate(currentDate.getDate() + 1);
+      
+      return count;
+    } catch {
+      return 0;
     }
-    
-    return count;
   };
 
   // 승인/반려 처리
@@ -149,7 +160,7 @@ const LeaveAdmin: React.FC = () => {
 
   // 승인/반려 확인
   const confirmApproval = async () => {
-    if (!modalData) return;
+    if (!modalData || !modalData.leave.id) return;
 
     if (modalData.action === 'rejected' && !rejectionReason.trim()) {
       alert('반려 사유를 입력해주세요.');
@@ -160,7 +171,7 @@ const LeaveAdmin: React.FC = () => {
 
     try {
       await leaveApi.updateLeaveStatus(
-        modalData.leave.id!, 
+        modalData.leave.id, 
         modalData.action,
         modalData.action === 'rejected' ? rejectionReason : undefined
       );
@@ -295,10 +306,7 @@ const LeaveAdmin: React.FC = () => {
               {filteredLeaves.map((leave) => (
                 <tr key={leave.id}>
                   <td>
-                    {leave.appliedAt 
-                      ? new Date(leave.appliedAt).toLocaleDateString('ko-KR')
-                      : '-'
-                    }
+                    {leave.appliedAt ? formatDate(leave.appliedAt) : '-'}
                   </td>
                   <td>
                     <span className="employee-name">{leave.name}</span>
@@ -344,7 +352,7 @@ const LeaveAdmin: React.FC = () => {
                       )}
                       {leave.status !== 'pending' && (
                         <span className="processed-text">
-                          {leave.reviewedBy && `${leave.reviewedBy}님이 처리`}
+                          {leave.reviewedBy ? `${leave.reviewedBy}님이 처리` : '처리됨'}
                         </span>
                       )}
                     </div>

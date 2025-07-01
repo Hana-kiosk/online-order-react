@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
-import { leaveApi, LeaveData } from '../../services/api';
+import { leaveApi, LeaveData, LeaveSummary } from '../../services/api';
 import './LeaveList.css';
 
 const LeaveList: React.FC = () => {
@@ -10,27 +10,49 @@ const LeaveList: React.FC = () => {
   const [leaves, setLeaves] = useState<LeaveData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  const [leaveSummary, setLeaveSummary] = useState<LeaveSummary | null>(null);
 
-  // 연차 목록 조회
+  // 연차 목록 및 잔여량 조회
   useEffect(() => {
-    const fetchLeaves = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
         setError('');
         
-        // 현재 사용자의 연차 목록만 조회
-        const leaveList = await leaveApi.getLeaveList(user?.id?.toString());
-        setLeaves(leaveList);
+        if (!user?.id) return;
+
+        // 연차 목록과 잔여량 동시 조회
+        const [leaveList, summary] = await Promise.allSettled([
+          leaveApi.getLeaveList(user.id.toString()),
+          leaveApi.getLeaveSummary(user.id.toString(), new Date().getFullYear())
+        ]);
+
+        // 연차 목록 설정
+        if (leaveList.status === 'fulfilled') {
+          setLeaves(leaveList.value);
+        } else {
+          console.error('연차 목록 조회 오류:', leaveList.reason);
+          setError('연차 목록을 불러오는 중 오류가 발생했습니다.');
+        }
+
+        // 연차 잔여량 설정
+        if (summary.status === 'fulfilled') {
+          setLeaveSummary(summary.value);
+        } else {
+          console.error('연차 잔여량 조회 오류:', summary.reason);
+          // 잔여량 조회 실패는 목록 표시에 영향주지 않음
+        }
+
       } catch (error) {
-        console.error('연차 목록 조회 오류:', error);
-        setError('연차 목록을 불러오는 중 오류가 발생했습니다.');
+        console.error('데이터 조회 오류:', error);
+        setError('데이터를 불러오는 중 오류가 발생했습니다.');
       } finally {
         setLoading(false);
       }
     };
 
     if (user?.id) {
-      fetchLeaves();
+      fetchData();
     }
   }, [user?.id]);
 
@@ -65,9 +87,11 @@ const LeaveList: React.FC = () => {
   };
 
   // 날짜 포맷팅
-  const formatDate = (date: Date | null): string => {
+  const formatDate = (date: Date | null | string | undefined): string => {
     if (!date) return '-';
-    return date.toLocaleDateString('ko-KR', {
+    
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleDateString('ko-KR', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit'
@@ -87,7 +111,18 @@ const LeaveList: React.FC = () => {
     return `${start} ~ ${end}`;
   };
 
-  // 일수 계산 - 주말 제외
+  // 일수 반환 - 서버에서 계산된 값 사용
+  const getDaysCount = (leave: LeaveData): number => {
+    // 서버에서 계산된 일수가 있으면 사용
+    if (leave.daysCount !== undefined) {
+      return leave.daysCount;
+    }
+    
+    // 백업: 클라이언트에서 계산 (주말 제외)
+    return calculateDays(leave.startDate, leave.endDate);
+  };
+
+  // 일수 계산 - 주말 제외 (백업용)
   const calculateDays = (startDate: Date | null, endDate: Date | null): number => {
     if (!startDate || !endDate) return 0;
     
@@ -120,25 +155,40 @@ const LeaveList: React.FC = () => {
     canceled: leaves.filter(l => l.status === 'canceled').length
   };
 
-  // 연차 취소 기능
-  const handleCancelLeave = async (leaveId: string | undefined) => {
-    if (!leaveId) return;
+  // 연차 취소 기능 (새로운 API 사용)
+  const handleCancelLeave = async (leave: LeaveData) => {
+    if (!leave.id || !user?.id) return;
     
     if (!window.confirm('정말로 연차 신청을 취소하시겠습니까?')) {
       return;
     }
 
     try {
-      await leaveApi.updateLeaveStatus(leaveId, 'canceled');
+      // 새로운 취소 API 사용
+      await leaveApi.cancelLeave(leave.id, user.id.toString());
       
       // 목록 새로고침
-      const leaveList = await leaveApi.getLeaveList(user?.id?.toString());
+      const leaveList = await leaveApi.getLeaveList(user.id.toString());
       setLeaves(leaveList);
       
+      // 잔여량 정보도 새로고침
+      try {
+        const summary = await leaveApi.getLeaveSummary(user.id.toString(), new Date().getFullYear());
+        setLeaveSummary(summary);
+      } catch (summaryError) {
+        console.error('잔여량 새로고침 오류:', summaryError);
+      }
+      
       alert('연차 신청이 취소되었습니다.');
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('연차 취소 오류:', error);
-      alert('취소 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
+      
+      let errorMessage = '취소 처리 중 오류가 발생했습니다.';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      alert(errorMessage);
     }
   };
 
@@ -147,8 +197,16 @@ const LeaveList: React.FC = () => {
     if (leave.status !== 'pending') return false;
     
     // 휴가 시작일이 오늘 이후인 경우에만 취소 가능
-    if (leave.startDate && new Date(leave.startDate) <= new Date()) {
-      return false;
+    if (leave.startDate) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const startDate = new Date(leave.startDate);
+      startDate.setHours(0, 0, 0, 0);
+      
+      if (startDate <= today) {
+        return false;
+      }
     }
     
     return true;
@@ -198,15 +256,40 @@ const LeaveList: React.FC = () => {
         </div>
       </div>
 
-      {/* 통계 섹션 */}
-      <div className="admin-stats">
-        <div className="stat-card">
+      {/* 연차 잔여량 정보 */}
+      {leaveSummary && (
+        <div className="leave-summary-card">
+          <h3>연차 잔여량 현황 ({leaveSummary.year}년)</h3>
+          <div className="summary-stats">
+            <div className="stat-item">
+              <span className="label">부여 연차</span>
+              <span className="value total">{leaveSummary.total_granted}일</span>
+            </div>
+            <div className="stat-item">
+              <span className="label">사용 연차</span>
+              <span className="value used">{leaveSummary.used_days}일</span>
+            </div>
+            <div className="stat-item">
+              <span className="label">대기중</span>
+              <span className="value pending">{leaveSummary.pending_days}일</span>
+            </div>
+            <div className="stat-item">
+              <span className="label">남은 연차</span>
+              <span className="value available">{leaveSummary.available_for_request}일</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 통계 카드 */}
+      <div className="stats-grid">
+        <div className="stat-card total">
           <div className="stat-number">{stats.total}</div>
           <div className="stat-label">전체 신청</div>
         </div>
         <div className="stat-card pending">
           <div className="stat-number">{stats.pending}</div>
-          <div className="stat-label">승인 대기</div>
+          <div className="stat-label">대기중</div>
         </div>
         <div className="stat-card approved">
           <div className="stat-number">{stats.approved}</div>
@@ -216,17 +299,14 @@ const LeaveList: React.FC = () => {
           <div className="stat-number">{stats.rejected}</div>
           <div className="stat-label">반려됨</div>
         </div>
-        <div className="stat-card canceled">
-          <div className="stat-number">{stats.canceled}</div>
-          <div className="stat-label">취소됨</div>
-        </div>
       </div>
 
+      {/* 연차 목록 */}
       {leaves.length === 0 ? (
         <div className="no-data">
           <div className="no-data-icon">📝</div>
           <h3>신청한 연차가 없습니다</h3>
-          <p>연차를 신청하여 휴가를 계획해보세요.</p>
+          <p>새로운 연차를 신청해보세요.</p>
           <button 
             className="btn-primary"
             onClick={() => navigate('/leave-system/apply')}
@@ -235,63 +315,69 @@ const LeaveList: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="leave-list-content">
-          <div className="leave-table-container">
-            <table className="leave-table">
-              <thead>
-                <tr>
-                  <th>신청일</th>
-                  <th>휴가 종류</th>
-                  <th>기간</th>
-                  <th>일수</th>
-                  <th>상태</th>
-                  <th>사유</th>
-                  <th>취소</th>
+        <div className="leave-table-container">
+          <table className="leave-table">
+            <thead>
+              <tr>
+                <th>신청일</th>
+                <th>휴가 종류</th>
+                <th>기간</th>
+                <th>일수</th>
+                <th>상태</th>
+                <th>사유</th>
+                <th>승인자</th>
+                <th>작업</th>
+              </tr>
+            </thead>
+            <tbody>
+              {leaves.map((leave) => (
+                <tr key={leave.id}>
+                  <td className="date-cell">
+                    {formatDate(leave.appliedAt)}
+                  </td>
+                  <td className="type-cell">
+                    <span className={`leave-type ${leave.leaveType}`}>
+                      {leave.leaveType}
+                    </span>
+                  </td>
+                  <td className="period-cell">
+                    {calculatePeriod(leave.startDate, leave.endDate)}
+                  </td>
+                  <td className="days-cell">
+                    <span className="days-count">
+                      {getDaysCount(leave)}일
+                    </span>
+                  </td>
+                  <td className="status-cell">
+                    <span className={`status-badge ${getStatusClass(leave.status || 'pending')}`}>
+                      {getStatusText(leave.status || 'pending')}
+                    </span>
+                  </td>
+                  <td className="reason-cell">
+                    <div className="reason-text" title={leave.reason}>
+                      {leave.reason || '-'}
+                    </div>
+                  </td>
+                  <td className="approver-cell">
+                    {leave.approverName || '-'}
+                  </td>
+                  <td className="action-cell">
+                    {canCancelLeave(leave) ? (
+                      <button
+                        className="btn-cancel"
+                        onClick={() => handleCancelLeave(leave)}
+                        title="연차 신청 취소"
+                      >
+                        취소
+                      </button>
+                    ) : (
+                      <span className="no-action">-</span>
+                    )}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {leaves.map((leave) => (
-                  <tr key={leave.id}>
-                    <td>
-                      {leave.appliedAt 
-                        ? new Date(leave.appliedAt).toLocaleDateString('ko-KR')
-                        : '-'
-                      }
-                    </td>
-                    <td>
-                      <span className="leave-type">{leave.leaveType}</span>
-                    </td>
-                    <td>{calculatePeriod(leave.startDate, leave.endDate)}</td>
-                    <td>
-                      <span className="days-count">
-                        {calculateDays(leave.startDate, leave.endDate)}일
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`status-badge ${getStatusClass(leave.status || 'pending')}`}>
-                        {getStatusText(leave.status || 'pending')}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="reason-cell">
-                        {leave.reason || '사유 없음'}
-                      </div>
-                    </td>
-                    <td>
-                      {canCancelLeave(leave) && leave.id && (
-                        <button 
-                          className="btn-secondary"
-                          onClick={() => handleCancelLeave(leave.id)}
-                        >
-                          취소
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

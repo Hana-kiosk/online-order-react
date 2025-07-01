@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useAuth } from '../../auth/AuthContext';
-import { leaveApi, LeaveData } from '../../services/api';
+import { leaveApi, LeaveData, LeaveSummary } from '../../services/api';
 import './LeaveApply.css';
 
 interface LeaveFormData {
@@ -31,6 +31,8 @@ const LeaveApply: React.FC = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [leaveSummary, setLeaveSummary] = useState<LeaveSummary | null>(null);
+  const [loadingSummary, setLoadingSummary] = useState(false);
 
   // user 정보가 로드되면 직원명 설정
   useEffect(() => {
@@ -39,6 +41,29 @@ const LeaveApply: React.FC = () => {
         ...prev,
         employeeName: user.name
       }));
+    }
+  }, [user]);
+
+  // 연차 잔여량 정보 조회
+  useEffect(() => {
+    const fetchLeaveSummary = async () => {
+      if (!user?.id) return;
+
+      setLoadingSummary(true);
+      try {
+        const currentYear = new Date().getFullYear();
+        const summary = await leaveApi.getLeaveSummary(user.id.toString(), currentYear);
+        setLeaveSummary(summary);
+      } catch (error) {
+        console.error('연차 잔여량 조회 오류:', error);
+        // 연차 잔여량 조회 실패 시에도 신청은 가능하도록 함
+      } finally {
+        setLoadingSummary(false);
+      }
+    };
+
+    if (user?.id) {
+      fetchLeaveSummary();
     }
   }, [user]);
 
@@ -112,7 +137,7 @@ const LeaveApply: React.FC = () => {
       ...prev,
       leaveType,
       // 연차 선택 시 사유 필드 초기화
-      reason: leaveType === '연가' ? '' : prev.reason
+      reason: leaveType === '연차' ? '' : prev.reason
     }));
   };
 
@@ -141,6 +166,14 @@ const LeaveApply: React.FC = () => {
       newErrors.reason = '신청 사유를 입력해주세요.';
     }
 
+    // 연차인 경우 잔여량 확인
+    if (formData.leaveType === '연차' && leaveSummary) {
+      const requestedDays = calculateLeaveDays();
+      if (requestedDays > leaveSummary.available_for_request) {
+        newErrors.endDate = `신청 가능한 연차가 부족합니다. (신청: ${requestedDays}일, 사용가능: ${leaveSummary.available_for_request}일)`;
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -159,7 +192,7 @@ const LeaveApply: React.FC = () => {
       // API 요청 데이터 준비
       const leaveRequestData: LeaveData = {
         userid: user?.id.toString() || '',
-        name: user?.name || '',
+        name: formData.employeeName,
         leaveType: formData.leaveType,
         startDate: formData.startDate,
         endDate: formData.endDate,
@@ -172,14 +205,24 @@ const LeaveApply: React.FC = () => {
       const result = await leaveApi.applyLeave(leaveRequestData);
       
       console.log('연차 신청 결과:', result);
-      alert('연차 신청이 완료되었습니다!');
+      
+      // 성공 메시지 표시
+      if (result.success) {
+        alert(`연차 신청이 완료되었습니다!\n신청 일수: ${result.data?.days_count || calculateLeaveDays()}일`);
+      } else {
+        alert('연차 신청이 완료되었습니다!');
+      }
+      
       navigate('/leave-system/list');
     } catch (error: unknown) {
       console.error('연차 신청 중 오류 발생:', error);
       
       // 에러 메시지 처리
       let errorMessage = '연차 신청 중 오류가 발생했습니다.';
-      if (error && typeof error === 'object' && 'response' in error) {
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
         if (axiosError.response?.data?.message) {
           errorMessage = axiosError.response.data.message;
@@ -188,7 +231,7 @@ const LeaveApply: React.FC = () => {
         }
       }
       
-      alert(errorMessage + ' 다시 시도해주세요.');
+      alert(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -236,6 +279,37 @@ const LeaveApply: React.FC = () => {
         <h1>연차 신청</h1>
         <p>연차 신청서를 작성해주세요. 모든 필수 항목을 입력해야 합니다.</p>
       </div>
+
+      {/* 연차 잔여량 정보 */}
+      {leaveSummary && (
+        <div className="leave-balance-info">
+          <h3>연차 잔여량 정보 ({leaveSummary.year}년)</h3>
+          <div className="balance-grid">
+            <div className="balance-item">
+              <span className="label">부여 연차</span>
+              <span className="value">{leaveSummary.total_granted}일</span>
+            </div>
+            <div className="balance-item">
+              <span className="label">사용 연차</span>
+              <span className="value used">{leaveSummary.used_days}일</span>
+            </div>
+            <div className="balance-item">
+              <span className="label">대기중 연차</span>
+              <span className="value pending">{leaveSummary.pending_days}일</span>
+            </div>
+            <div className="balance-item">
+              <span className="label">신청 가능</span>
+              <span className="value available">{leaveSummary.available_for_request}일</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {loadingSummary && (
+        <div className="loading-summary">
+          <p>연차 잔여량 정보를 불러오는 중...</p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="leave-apply-form">
         {/* 직원 정보 */}
@@ -307,6 +381,14 @@ const LeaveApply: React.FC = () => {
           {formData.startDate && formData.endDate && (
             <div className="leave-days-info">
               <strong>총 휴가 일수: {calculateLeaveDays()}일</strong>
+              {formData.leaveType === '연차' && leaveSummary && (
+                <span className={`availability ${calculateLeaveDays() <= leaveSummary.available_for_request ? 'available' : 'unavailable'}`}>
+                  {calculateLeaveDays() <= leaveSummary.available_for_request 
+                    ? '(신청 가능)' 
+                    : `(신청 불가 - ${leaveSummary.available_for_request}일까지 가능)`
+                  }
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -338,26 +420,26 @@ const LeaveApply: React.FC = () => {
           </div>
         </div>
 
-        {/* 버튼 */}
+        {/* 버튼 영역 */}
         <div className="form-actions">
-          <button
-            type="button"
+          <button 
+            type="button" 
+            onClick={handleReset} 
             className="btn-secondary"
-            onClick={() => navigate('/leave-system')}
-            disabled={isSubmitting}
-          >
-            취소
-          </button>
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={handleReset}
             disabled={isSubmitting}
           >
             초기화
           </button>
-          <button
-            type="submit"
+          <button 
+            type="button" 
+            onClick={() => navigate('/leave-system/list')} 
+            className="btn-secondary"
+            disabled={isSubmitting}
+          >
+            취소
+          </button>
+          <button 
+            type="submit" 
             className="btn-primary"
             disabled={isSubmitting}
           >
