@@ -94,6 +94,12 @@
   background-color: #dc3545;
 }
 
+.legend-color.holiday {
+  background-color: #ffffff;
+  border: 2px solid #dc3545;
+  color: #dc3545;
+}
+
 /* 캘린더 래퍼 */
 .calendar-wrapper {
   background: white;
@@ -228,6 +234,18 @@
 .fc-day-today.fc-day-sat .fc-daygrid-day-number {
   color: #007bff !important;
   background-color: rgba(0, 123, 255, 0.2) !important;
+}
+
+/* 공휴일 날짜 숫자 스타일 */
+.fc-daygrid-day.holiday .fc-daygrid-day-number {
+  color: #dc3545 !important; /* 공휴일 - 빨간색 */
+  font-weight: 500;
+}
+
+/* 공휴일이면서 오늘인 경우 */
+.fc-day-today.holiday .fc-daygrid-day-number {
+  color: #dc3545 !important;
+  background-color: rgba(220, 53, 69, 0.2) !important;
 }
 
 /* 도움말 섹션 */
