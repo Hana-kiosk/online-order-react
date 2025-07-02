@@ -311,10 +311,6 @@ const LeaveCalendar: React.FC = () => {
           <span className="legend-color pending"></span>
           <span>대기 중인 연차</span>
         </div>
-        <div className="legend-item">
-          <span className="legend-color holiday"></span>
-          <span>공휴일</span>
-        </div>
       </div>
 
       <div className="calendar-wrapper">
