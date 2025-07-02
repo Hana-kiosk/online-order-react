@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import { leaveApi, LeaveData, LeaveSummary } from '../../services/api';
+import { formatDate, formatDateRange } from '../../utils/dateUtils';
 import './LeaveList.css';
 
 const LeaveList: React.FC = () => {
@@ -86,29 +87,9 @@ const LeaveList: React.FC = () => {
     }
   };
 
-  // 날짜 포맷팅
-  const formatDate = (date: Date | null | string | undefined): string => {
-    if (!date) return '-';
-    
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
-    return dateObj.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    });
-  };
-
-  // 기간 계산
-  const calculatePeriod = (startDate: Date | null, endDate: Date | null): string => {
-    if (!startDate || !endDate) return '-';
-    
-    const start = formatDate(startDate);
-    const end = formatDate(endDate);
-    
-    if (start === end) {
-      return start;
-    }
-    return `${start} ~ ${end}`;
+  // 기간 계산 - 공통 유틸리티 사용으로 수정
+  const calculatePeriod = (startDate: Date | string | null, endDate: Date | string | null): string => {
+    return formatDateRange(startDate, endDate);
   };
 
   // 일수 반환 - 서버에서 계산된 값 사용
@@ -123,27 +104,31 @@ const LeaveList: React.FC = () => {
   };
 
   // 일수 계산 - 주말 제외 (백업용)
-  const calculateDays = (startDate: Date | null, endDate: Date | null): number => {
+  const calculateDays = (startDate: Date | string | null, endDate: Date | string | null): number => {
     if (!startDate || !endDate) return 0;
     
-    let count = 0;
-    const currentDate = new Date(startDate);
-    const end = new Date(endDate);
-    
-    // 시작일부터 종료일까지 반복하면서 평일만 카운트
-    while (currentDate <= end) {
-      const dayOfWeek = currentDate.getDay(); // 0: 일요일, 6: 토요일
+    try {
+      let count = 0;
+      const currentDate = new Date(startDate instanceof Date ? startDate : startDate);
+      const end = new Date(endDate instanceof Date ? endDate : endDate);
       
-      // 평일(월-금)인 경우에만 카운트
-      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-        count++;
+      // 시작일부터 종료일까지 반복하면서 평일만 카운트
+      while (currentDate <= end) {
+        const dayOfWeek = currentDate.getDay(); // 0: 일요일, 6: 토요일
+        
+        // 평일(월-금)인 경우에만 카운트
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+          count++;
+        }
+        
+        // 다음 날로 이동
+        currentDate.setDate(currentDate.getDate() + 1);
       }
       
-      // 다음 날로 이동
-      currentDate.setDate(currentDate.getDate() + 1);
+      return count;
+    } catch {
+      return 0;
     }
-    
-    return count;
   };
 
   // 통계 계산

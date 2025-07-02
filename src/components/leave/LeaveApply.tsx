@@ -4,6 +4,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useAuth } from '../../auth/AuthContext';
 import { leaveApi, LeaveData, LeaveSummary } from '../../services/api';
+import { formatLocalDate } from '../../utils/dateUtils';
 import './LeaveApply.css';
 
 interface LeaveFormData {
@@ -33,6 +34,7 @@ const LeaveApply: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [leaveSummary, setLeaveSummary] = useState<LeaveSummary | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
+  const [holidays, setHolidays] = useState<Set<string>>(new Set());
 
   // user 정보가 로드되면 직원명 설정
   useEffect(() => {
@@ -95,6 +97,26 @@ const LeaveApply: React.FC = () => {
       }
     }
   }, [location.search]);
+
+  // 공휴일 데이터 로드
+  useEffect(() => {
+    const fetchHolidays = async () => {
+      try {
+        const holidayData = await leaveApi.getHolidays();
+        if (holidayData.success) {
+          const holidayDates = new Set<string>(
+            holidayData.data.map((holiday: { date: string; name: string; type: string }) => holiday.date)
+          );
+          setHolidays(holidayDates);
+        }
+      } catch (error) {
+        console.error('공휴일 데이터 로드 오류:', error);
+        // 공휴일 로드 실패 시에도 신청은 가능하도록 함
+      }
+    };
+
+    fetchHolidays();
+  }, []);
 
   // 입력 필드 변경 핸들러
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -189,13 +211,13 @@ const LeaveApply: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // API 요청 데이터 준비
+      // API 요청 데이터 준비 - 날짜를 시간대 안전한 문자열로 변환
       const leaveRequestData: LeaveData = {
         userid: user?.id.toString() || '',
         name: formData.employeeName,
         leaveType: formData.leaveType,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
+        startDate: formData.startDate ? formatLocalDate(formData.startDate) : null,
+        endDate: formData.endDate ? formatLocalDate(formData.endDate) : null,
         reason: formData.reason
       };
 
@@ -249,7 +271,7 @@ const LeaveApply: React.FC = () => {
     setErrors({});
   };
 
-  // 날짜 계산 (휴가 일수) - 주말 제외
+  // 날짜 계산 (휴가 일수) - 주말과 공휴일 제외 (백엔드와 동일한 로직)
   const calculateLeaveDays = (): number => {
     if (!formData.startDate || !formData.endDate) return 0;
     
@@ -257,12 +279,15 @@ const LeaveApply: React.FC = () => {
     const currentDate = new Date(formData.startDate);
     const endDate = new Date(formData.endDate);
     
-    // 시작일부터 종료일까지 반복하면서 평일만 카운트
+    // 시작일부터 종료일까지 반복하면서 평일이면서 공휴일이 아닌 날만 카운트
     while (currentDate <= endDate) {
       const dayOfWeek = currentDate.getDay(); // 0: 일요일, 6: 토요일
+      const dateString = formatLocalDate(currentDate); // 로컬 시간 기준 YYYY-MM-DD 형식
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+      const isHoliday = holidays.has(dateString);
       
-      // 평일(월-금)인 경우에만 카운트
-      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      // 평일(월-금)이면서 공휴일이 아닌 경우에만 카운트
+      if (!isWeekend && !isHoliday) {
         count++;
       }
       

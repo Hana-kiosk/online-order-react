@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../auth/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { leaveApi, LeaveData } from '../../services/api';
+import { formatDate, formatDateRange } from '../../utils/dateUtils';
 import './LeaveAdmin.css';
 
 interface ApprovalModalData {
@@ -100,36 +101,20 @@ const LeaveAdmin: React.FC = () => {
     }
   };
 
-  // 날짜 포맷팅
-  const formatDate = (date: Date | string | null): string => {
-    if (!date) return '-';
-    try {
-      const dateObj = date instanceof Date ? date : new Date(date);
-      return dateObj.toLocaleDateString('ko-KR', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      });
-    } catch {
-      return '-';
-    }
-  };
-
-  // 기간 계산
+  // 기간 계산 - 공통 유틸리티 사용으로 수정
   const calculatePeriod = (startDate: Date | string | null, endDate: Date | string | null): string => {
-    if (!startDate || !endDate) return '-';
-    
-    const start = formatDate(startDate);
-    const end = formatDate(endDate);
-    
-    if (start === end) {
-      return start;
-    }
-    return `${start} ~ ${end}`;
+    return formatDateRange(startDate, endDate);
   };
 
-  // 일수 계산 - 주말 제외
-  const calculateDays = (startDate: Date | string | null, endDate: Date | string | null): number => {
+  // 일수 계산 - 주말 제외 (백엔드에서 계산된 값이 있으면 그것을 우선 사용)
+  const calculateDays = (leave: LeaveData): number => {
+    // 백엔드에서 계산된 days_count가 있으면 그것을 사용
+    if (leave.daysCount && leave.daysCount > 0) {
+      return leave.daysCount;
+    }
+    
+    // 백업용: 프론트엔드에서 간단 계산 (주말만 제외, 공휴일 미고려)
+    const { startDate, endDate } = leave;
     if (!startDate || !endDate) return 0;
     
     try {
@@ -317,7 +302,7 @@ const LeaveAdmin: React.FC = () => {
                   <td>{calculatePeriod(leave.startDate, leave.endDate)}</td>
                   <td>
                     <span className="days-count">
-                      {calculateDays(leave.startDate, leave.endDate)}일
+                      {calculateDays(leave)}일
                     </span>
                   </td>
                   <td>
@@ -395,7 +380,7 @@ const LeaveAdmin: React.FC = () => {
                 <div className="info-row">
                   <span className="info-label">일수:</span>
                   <span className="info-value">
-                    {calculateDays(modalData.leave.startDate, modalData.leave.endDate)}일
+                    {calculateDays(modalData.leave)}일
                   </span>
                 </div>
                 {modalData.leave.reason && (

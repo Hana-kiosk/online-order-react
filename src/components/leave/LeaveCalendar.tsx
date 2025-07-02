@@ -6,6 +6,7 @@ import { EventClickArg } from '@fullcalendar/core';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import { leaveApi, LeaveData } from '../../services/api';
+import { formatLocalDate } from '../../utils/dateUtils';
 import './LeaveCalendar.css';
 
 interface LeaveEvent {
@@ -65,18 +66,16 @@ const LeaveCalendar: React.FC = () => {
 
   // 연차 데이터를 캘린더 이벤트로 변환
   const convertLeaveToEvent = (leave: LeaveData): LeaveEvent => {
-    // 상태별 색상 설정
     const getStatusColor = (status: string) => {
       switch (status) {
         case 'approved':
-          return { bg: '#28a745', border: '#28a745' };
-        case 'rejected':
-          return { bg: '#dc3545', border: '#dc3545' };
-        case 'canceled':
-          return { bg: '#6c757d', border: '#6c757d' };
+          return { bg: '#28a745', border: '#1e7e34' };
         case 'pending':
+          return { bg: '#ffc107', border: '#e0a800' };
+        case 'rejected':
+          return { bg: '#dc3545', border: '#c82333' };
         default:
-          return { bg: '#ffc107', border: '#ffc107' };
+          return { bg: '#6c757d', border: '#545b62' };
       }
     };
 
@@ -86,10 +85,15 @@ const LeaveCalendar: React.FC = () => {
     return {
       id: leave.id || '',
       title: `${leave.name} - ${leave.leaveType}${statusText}`,
-      start: leave.startDate ? leave.startDate.toISOString().split('T')[0] : '',
+      start: leave.startDate ? formatLocalDate(leave.startDate instanceof Date ? leave.startDate : new Date(leave.startDate)) : '',
       end: leave.endDate ? 
         // FullCalendar의 end는 exclusive이므로 하루 추가
-        new Date(leave.endDate.getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] : 
+        (() => {
+          const endDate = leave.endDate instanceof Date ? leave.endDate : new Date(leave.endDate);
+          const nextDay = new Date(endDate);
+          nextDay.setDate(nextDay.getDate() + 1);
+          return formatLocalDate(nextDay);
+        })() :
         undefined,
       backgroundColor: colors.bg,
       borderColor: colors.border,

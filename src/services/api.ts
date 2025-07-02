@@ -280,8 +280,8 @@ export interface LeaveData {
   userid: string;
   name: string;
   leaveType: string;
-  startDate: Date | null;
-  endDate: Date | null;
+  startDate: Date | string | null;
+  endDate: Date | string | null;
   reason: string;
   status?: 'pending' | 'approved' | 'rejected' | 'canceled';
   daysCount?: number;
@@ -333,60 +333,27 @@ export interface LeaveSummary {
   utilization_rate: number;
 }
 
-// 서버 응답 데이터를 클라이언트 데이터로 변환
-const convertServerLeaveToClient = (serverLeave: ServerLeave): LeaveData => {
-  return {
-    id: serverLeave.id,
-    userid: serverLeave.userid,
-    name: serverLeave.employee_name,
-    leaveType: serverLeave.leave_type,
-    startDate: serverLeave.start_date ? new Date(serverLeave.start_date) : null,
-    endDate: serverLeave.end_date ? new Date(serverLeave.end_date) : null,
-    reason: serverLeave.reason,
-    status: serverLeave.status,
-    daysCount: serverLeave.days_count,
-    appliedAt: serverLeave.created_at,
-    reviewedAt: serverLeave.approved_at || undefined,
-    reviewedBy: serverLeave.approver_name || undefined,
-    approverUserid: serverLeave.approver_userid || undefined,
-    approverName: serverLeave.approver_name || undefined,
-    rejectionReason: serverLeave.rejection_reason || undefined
-  };
-};
-
-// 클라이언트 데이터를 서버 데이터로 변환
-const convertClientLeaveToServer = (clientLeave: LeaveData) => {
-  // 날짜 변환 헬퍼 함수
-  const formatDate = (date: Date | null): string | null => {
-    if (!date) return null;
-    const d = new Date(date);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  return {
-    userid: clientLeave.userid,
-    employee_name: clientLeave.name,
-    leave_type: clientLeave.leaveType,
-    start_date: formatDate(clientLeave.startDate),
-    end_date: formatDate(clientLeave.endDate),
-    reason: clientLeave.reason || ''
-  };
-};
-
 // 연차 API 함수들
 export const leaveApi = {
   // 연차 신청
   async applyLeave(leaveData: LeaveData) {
+    const requestData = {
+      userid: leaveData.userid,
+      employee_name: leaveData.name,
+      leave_type: leaveData.leaveType,
+      start_date: leaveData.startDate instanceof Date 
+        ? leaveData.startDate.toISOString().split('T')[0] 
+        : leaveData.startDate,
+      end_date: leaveData.endDate instanceof Date 
+        ? leaveData.endDate.toISOString().split('T')[0] 
+        : leaveData.endDate,
+      reason: leaveData.reason || ''
+    };
+
     try {
-      const serverData = convertClientLeaveToServer(leaveData);
-      console.log('연차 신청 데이터:', serverData);
-      const response = await apiClient.post('/leave/apply', serverData);
+      const response = await apiClient.post('/leave/apply', requestData);
       return response.data;
     } catch (error: unknown) {
-      console.error('연차 신청 오류:', error);
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { data?: { message?: string } } };
         if (axiosError.response?.data?.message) {
@@ -397,17 +364,27 @@ export const leaveApi = {
     }
   },
 
-  // 연차 목록 조회
-  async getLeaveList(userid?: string) {
+  // 연차 목록 조회 (특정 사용자 또는 전체)
+  async getLeaveList(userid?: string): Promise<LeaveData[]> {
     try {
       const params = userid ? { userid } : {};
       const response = await apiClient.get('/leave/list', { params });
       
-      // 서버에서 배열을 직접 반환하므로 변환 처리
-      if (Array.isArray(response.data)) {
-        return response.data.map(convertServerLeaveToClient);
-      }
-      return [];
+      return response.data.map((item: ServerLeave) => ({
+        id: item.id,
+        userid: item.userid,
+        name: item.employee_name,
+        leaveType: item.leave_type,
+        startDate: item.start_date ? new Date(item.start_date) : null,
+        endDate: item.end_date ? new Date(item.end_date) : null,
+        reason: item.reason,
+        status: item.status,
+        appliedAt: item.created_at ? new Date(item.created_at) : null,
+        reviewedBy: item.approver_name || undefined,
+        reviewedAt: item.approved_at ? new Date(item.approved_at) : null,
+        rejectionReason: item.rejection_reason || undefined,
+        daysCount: item.days_count
+      }));
     } catch (error) {
       console.error('연차 목록 조회 오류:', error);
       throw error;
@@ -415,37 +392,37 @@ export const leaveApi = {
   },
 
   // 연차 상태 업데이트 (관리자용)
-  async updateLeaveStatus(leaveId: string, status: 'approved' | 'rejected' | 'canceled', rejectionReason?: string, approverUserid?: string, approverName?: string) {
+  async updateLeaveStatus(
+    leaveId: string, 
+    status: 'approved' | 'rejected' | 'canceled',
+    rejectionReason?: string,
+    approverUserid?: string,
+    approverName?: string
+  ) {
     try {
-      const data: {
+      const requestData: {
         status: 'approved' | 'rejected' | 'canceled';
+        rejection_reason?: string;
         approver_userid?: string;
         approver_name?: string;
-        rejection_reason?: string;
-      } = { 
-        status,
-        approver_userid: approverUserid,
-        approver_name: approverName
-      };
+      } = { status };
+      
       if (rejectionReason) {
-        data.rejection_reason = rejectionReason;
+        requestData.rejection_reason = rejectionReason;
       }
       
-      const response = await apiClient.put(`/leave/${leaveId}/status`, data);
+      if (approverUserid) {
+        requestData.approver_userid = approverUserid;
+      }
+      
+      if (approverName) {
+        requestData.approver_name = approverName;
+      }
+      
+      const response = await apiClient.put(`/leave/${leaveId}/status`, requestData);
       return response.data;
     } catch (error) {
       console.error('연차 상태 업데이트 오류:', error);
-      throw error;
-    }
-  },
-
-  // 특정 연차 정보 조회
-  async getLeave(leaveId: string) {
-    try {
-      const response = await apiClient.get(`/leave/${leaveId}`);
-      return convertServerLeaveToClient(response.data);
-    } catch (error) {
-      console.error('연차 정보 조회 오류:', error);
       throw error;
     }
   },
@@ -456,7 +433,6 @@ export const leaveApi = {
       const response = await apiClient.put(`/api/leave/cancel/${leaveId}`, { userid });
       return response.data;
     } catch (error: unknown) {
-      console.error('연차 취소 오류:', error);
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { data?: { message?: string } } };
         if (axiosError.response?.data?.message) {
@@ -467,13 +443,24 @@ export const leaveApi = {
     }
   },
 
-  // 연차 요약 정보 조회
+  // 연차 잔여량 조회
   async getLeaveSummary(userId: string, year: number): Promise<LeaveSummary> {
     try {
       const response = await apiClient.get(`/leaves/summary/${userId}/${year}`);
       return response.data;
     } catch (error) {
-      console.error('연차 요약 정보 조회 오류:', error);
+      console.error('연차 잔여량 조회 오류:', error);
+      throw error;
+    }
+  },
+
+  // 공휴일 목록 조회
+  async getHolidays() {
+    try {
+      const response = await apiClient.get('/holidays');
+      return response.data;
+    } catch (error) {
+      console.error('공휴일 목록 조회 오류:', error);
       throw error;
     }
   },
