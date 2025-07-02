@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../auth/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { leaveApi, LeaveData } from '../../services/api';
-import { formatDate, formatDateRange } from '../../utils/dateUtils';
+import { formatDate, formatDateRange, calculateBusinessDaysKST } from '../../utils/dateUtils';
 import './LeaveAdmin.css';
 
 interface ApprovalModalData {
@@ -21,6 +21,20 @@ const LeaveAdmin: React.FC = () => {
   const [modalData, setModalData] = useState<ApprovalModalData | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [processing, setProcessing] = useState(false);
+
+  // 필터링된 연차 목록 (useMemo로 성능 최적화)
+  const filteredLeaves = useMemo(() => {
+    // 취소된 연차는 관리자 페이지에서 제외 (useEffect에서 이미 처리했지만, 안전장치로 유지)
+    return leaves.filter(leave => {
+      const matchesFilter = filter === 'all' || leave.status === filter;
+      const matchesSearch = searchTerm === '' || 
+        leave.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        leave.leaveType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (leave.reason && leave.reason.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      return matchesFilter && matchesSearch;
+    });
+  }, [leaves, filter, searchTerm]);
 
   // 연차 목록 조회
   useEffect(() => {
@@ -51,26 +65,12 @@ const LeaveAdmin: React.FC = () => {
     return <Navigate to="/leave-system/calendar" replace />;
   }
 
-  // 필터링된 연차 목록
-  const filteredLeaves = leaves.filter(leave => {
-    // 취소된 연차는 관리자 페이지에서 제외
-    if (leave.status === 'canceled') return false;
-    
-    const matchesFilter = filter === 'all' || leave.status === filter;
-    const matchesSearch = searchTerm === '' || 
-      leave.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      leave.leaveType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (leave.reason && leave.reason.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    return matchesFilter && matchesSearch;
-  });
-
   // 통계 계산
   const stats = {
-    total: leaves.length,
-    pending: leaves.filter(l => l.status === 'pending').length,
-    approved: leaves.filter(l => l.status === 'approved').length,
-    rejected: leaves.filter(l => l.status === 'rejected').length
+    total: filteredLeaves.length, // 필터링된 목록 기준으로 통계 계산
+    pending: filteredLeaves.filter(l => l.status === 'pending').length,
+    approved: filteredLeaves.filter(l => l.status === 'approved').length,
+    rejected: filteredLeaves.filter(l => l.status === 'rejected').length
   };
 
   // 상태별 CSS 클래스 반환
@@ -106,34 +106,16 @@ const LeaveAdmin: React.FC = () => {
     return formatDateRange(startDate, endDate);
   };
 
-  // 일수 계산 - 주말 제외 (백엔드에서 계산된 값이 있으면 그것을 우선 사용)
+  // 일수 계산 (KST 기준)
   const calculateDays = (leave: LeaveData): number => {
     // 백엔드에서 계산된 days_count가 있으면 그것을 사용
     if (leave.daysCount && leave.daysCount > 0) {
       return leave.daysCount;
     }
     
-    // 백업용: 프론트엔드에서 간단 계산 (주말만 제외, 공휴일 미고려)
-    const { startDate, endDate } = leave;
-    if (!startDate || !endDate) return 0;
-    
-    try {
-      let count = 0;
-      const currentDate = new Date(startDate instanceof Date ? startDate : new Date(startDate));
-      const end = new Date(endDate instanceof Date ? endDate : new Date(endDate));
-      
-      while (currentDate <= end) {
-        const dayOfWeek = currentDate.getDay();
-        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-          count++;
-        }
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
-      
-      return count;
-    } catch {
-      return 0;
-    }
+    // 백업용: 프론트엔드에서 KST 기준으로 계산
+    if (!leave.startDate || !leave.endDate) return 0;
+    return calculateBusinessDaysKST(leave.startDate, leave.endDate);
   };
 
   // 승인/반려 처리

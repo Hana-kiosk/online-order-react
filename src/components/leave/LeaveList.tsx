@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import { leaveApi, LeaveData, LeaveSummary } from '../../services/api';
-import { formatDate, formatDateRange } from '../../utils/dateUtils';
+import { formatDate, formatDateRange, calculateBusinessDaysKST, getCurrentKSTDate } from '../../utils/dateUtils';
 import './LeaveList.css';
 
 const LeaveList: React.FC = () => {
@@ -100,35 +100,8 @@ const LeaveList: React.FC = () => {
     }
     
     // 백업: 클라이언트에서 계산 (주말 제외)
-    return calculateDays(leave.startDate, leave.endDate);
-  };
-
-  // 일수 계산 - 주말 제외 (백업용)
-  const calculateDays = (startDate: Date | string | null, endDate: Date | string | null): number => {
-    if (!startDate || !endDate) return 0;
-    
-    try {
-      let count = 0;
-      const currentDate = new Date(startDate instanceof Date ? startDate : startDate);
-      const end = new Date(endDate instanceof Date ? endDate : endDate);
-      
-      // 시작일부터 종료일까지 반복하면서 평일만 카운트
-      while (currentDate <= end) {
-        const dayOfWeek = currentDate.getDay(); // 0: 일요일, 6: 토요일
-        
-        // 평일(월-금)인 경우에만 카운트
-        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-          count++;
-        }
-        
-        // 다음 날로 이동
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
-      
-      return count;
-    } catch {
-      return 0;
-    }
+    if (!leave.startDate || !leave.endDate) return 0;
+    return calculateBusinessDaysKST(leave.startDate, leave.endDate);
   };
 
   // 통계 계산
@@ -177,24 +150,19 @@ const LeaveList: React.FC = () => {
     }
   };
 
-  // 취소 가능 여부 확인
+  // 취소 가능 여부 확인 (KST 기준)
   const canCancelLeave = (leave: LeaveData): boolean => {
-    if (leave.status !== 'pending') return false;
+    if (leave.status !== 'pending' && leave.status !== 'approved') return false;
     
-    // 휴가 시작일이 오늘 이후인 경우에만 취소 가능
+    // 휴가 시작일이 KST 기준 오늘 이후인 경우에만 취소 가능
     if (leave.startDate) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const todayKST = getCurrentKSTDate();
+      const startDateKST = leave.startDate.toString().substring(0, 10);
       
-      const startDate = new Date(leave.startDate);
-      startDate.setHours(0, 0, 0, 0);
-      
-      if (startDate <= today) {
-        return false;
-      }
+      return startDateKST > todayKST;
     }
     
-    return true;
+    return false;
   };
 
   if (loading) {

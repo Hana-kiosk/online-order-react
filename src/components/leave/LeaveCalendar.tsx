@@ -6,7 +6,7 @@ import { EventClickArg } from '@fullcalendar/core';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import { leaveApi, LeaveData } from '../../services/api';
-import { formatLocalDate } from '../../utils/dateUtils';
+import { formatLocalDate, formatKSTDate, calculateBusinessDaysKST } from '../../utils/dateUtils';
 import './LeaveCalendar.css';
 
 interface LeaveEvent {
@@ -51,28 +51,6 @@ const LeaveCalendar: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState<string>('');
   const [holidayDates, setHolidayDates] = useState<Set<string>>(new Set());
-
-  // 주말을 제외한 일수 계산 함수
-  const calculateBusinessDays = (startDate: Date, endDate: Date): number => {
-    let count = 0;
-    const currentDate = new Date(startDate);
-    const end = new Date(endDate);
-    
-    // 시작일부터 종료일까지 반복하면서 평일만 카운트
-    while (currentDate <= end) {
-      const dayOfWeek = currentDate.getDay(); // 0: 일요일, 6: 토요일
-      
-      // 평일(월-금)인 경우에만 카운트
-      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-        count++;
-      }
-      
-      // 다음 날로 이동
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-    
-    return count;
-  };
 
   // 공휴일을 캘린더 이벤트로 변환
   const convertHolidayToEvent = (holiday: HolidayData): LeaveEvent => {
@@ -207,26 +185,29 @@ const LeaveCalendar: React.FC = () => {
     let days = 0;
     
     if (event.start) {
-      const startDate = event.start.toLocaleDateString('ko-KR');
       const actualStartDate = new Date(event.start);
+      const startDate = formatKSTDate(actualStartDate);
       
       if (event.end && props.eventType === 'leave') {
         // end 날짜에서 하루를 빼서 실제 마지막 날 계산
         const actualEndDate = new Date(event.end);
         actualEndDate.setDate(actualEndDate.getDate() - 1);
-        const endDate = actualEndDate.toLocaleDateString('ko-KR');
+        const endDate = formatKSTDate(actualEndDate);
+        
         periodText = startDate === endDate ? startDate : `${startDate} ~ ${endDate}`;
         
-        // 주말을 제외한 일수 계산
-        days = calculateBusinessDays(actualStartDate, actualEndDate);
+        // 주말 및 공휴일을 제외한 업무일 수 계산
+        days = calculateBusinessDaysKST(actualStartDate, actualEndDate, holidayDates);
       } else {
         periodText = startDate;
-        // 단일 날짜인 경우 해당 날짜가 평일인지 확인 (공휴일은 1일로 표시)
+        // 단일 날짜인 경우 (공휴일 또는 하루짜리 연차)
         if (props.eventType === 'holiday') {
-          days = 1;
+          days = 1; // 공휴일은 항상 1일
         } else {
           const dayOfWeek = actualStartDate.getDay();
-          days = (dayOfWeek !== 0 && dayOfWeek !== 6) ? 1 : 0;
+          const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+          // 주말이 아니면서 공휴일도 아닌 경우에만 1일
+          days = !isWeekend && !holidayDates.has(startDate) ? 1 : 0;
         }
       }
     }
