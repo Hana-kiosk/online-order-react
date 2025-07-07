@@ -2,9 +2,9 @@ import axios from 'axios';
 
 // 플라스크 서버 주소
 // dev용
-// const API_URL = 'https://port-0-online-order-flask-free-m47pn82w3295ead8.sel4.cloudtype.app/api';
+const API_URL = 'https://port-0-online-order-flask-free-m47pn82w3295ead8.sel4.cloudtype.app/api';
 // 배포용
-const API_URL = 'https://port-0-online-order-flask-m47pn82w3295ead8.sel4.cloudtype.app/api';
+// const API_URL = 'https://port-0-online-order-flask-m47pn82w3295ead8.sel4.cloudtype.app/api';
 // 로컬용
 // const API_URL = 'http://localhost:5000/api';
 
