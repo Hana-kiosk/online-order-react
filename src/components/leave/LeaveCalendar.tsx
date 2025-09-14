@@ -1,0 +1,396 @@
+import React, { useState, useEffect } from 'react';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
+import { EventClickArg } from '@fullcalendar/core';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../auth/AuthContext';
+import { leaveApi, LeaveData } from '../../services/api';
+import { formatLocalDate, formatKSTDate, calculateBusinessDaysKST } from '../../utils/dateUtils';
+import './LeaveCalendar.css';
+
+interface LeaveEvent {
+  id: string;
+  title: string;
+  start: string;
+  end?: string;
+  backgroundColor: string;
+  borderColor: string;
+  textColor?: string;
+  extendedProps: {
+    employeeName?: string;
+    leaveType: string;
+    status?: 'pending' | 'approved' | 'rejected' | 'canceled';
+    reason?: string;
+    eventType: 'leave' | 'holiday';
+  };
+}
+
+interface EventModalData {
+  employeeName?: string;
+  leaveType: string;
+  status?: 'pending' | 'approved' | 'rejected' | 'canceled';
+  reason?: string;
+  period: string;
+  days: number;
+  eventType: 'leave' | 'holiday';
+}
+
+interface HolidayData {
+  date: string;
+  name: string;
+  type: string;
+}
+
+const LeaveCalendar: React.FC = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [events, setEvents] = useState<LeaveEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [modalData, setModalData] = useState<EventModalData | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [error, setError] = useState<string>('');
+  const [holidayDates, setHolidayDates] = useState<Set<string>>(new Set());
+
+  // 공휴일을 캘린더 이벤트로 변환
+  const convertHolidayToEvent = (holiday: HolidayData): LeaveEvent => {
+    return {
+      id: `holiday-${holiday.date}`,
+      title: holiday.name,
+      start: holiday.date,
+      backgroundColor: '#ffffff',
+      borderColor: '#dc3545',
+      textColor: '#dc3545',
+      extendedProps: {
+        leaveType: '공휴일',
+        eventType: 'holiday'
+      }
+    };
+  };
+
+  // 연차 데이터를 캘린더 이벤트로 변환
+  const convertLeaveToEvent = (leave: LeaveData): LeaveEvent => {
+    const getStatusColor = (status: string) => {
+      switch (status) {
+        case 'approved':
+          return { bg: '#28a745', border: '#1e7e34' };
+        case 'pending':
+          return { bg: '#ffc107', border: '#e0a800' };
+        case 'rejected':
+          return { bg: '#dc3545', border: '#c82333' };
+        default:
+          return { bg: '#6c757d', border: '#545b62' };
+      }
+    };
+
+    const colors = getStatusColor(leave.status || 'pending');
+    const statusText = leave.status === 'pending' ? ' (대기중)' : '';
+
+    return {
+      id: leave.id || '',
+      title: `${leave.name} - ${leave.leaveType}${statusText}`,
+      start: leave.startDate ? formatLocalDate(leave.startDate instanceof Date ? leave.startDate : new Date(leave.startDate)) : '',
+      end: leave.endDate ? 
+        // FullCalendar의 end는 exclusive이므로 하루 추가
+        (() => {
+          const endDate = leave.endDate instanceof Date ? leave.endDate : new Date(leave.endDate);
+          const nextDay = new Date(endDate);
+          nextDay.setDate(nextDay.getDate() + 1);
+          return formatLocalDate(nextDay);
+        })() :
+        undefined,
+      backgroundColor: colors.bg,
+      borderColor: colors.border,
+      extendedProps: {
+        employeeName: leave.name,
+        leaveType: leave.leaveType,
+        status: leave.status || 'pending',
+        reason: leave.reason,
+        eventType: 'leave'
+      }
+    };
+  };
+
+  // 공휴일 및 연차 데이터 조회
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        
+        // 공휴일과 연차 데이터 동시 조회
+        const [holidayResponse, leaveList] = await Promise.allSettled([
+          leaveApi.getHolidays(),
+          leaveApi.getLeaveList() // 모든 데이터 조회
+        ]);
+
+        let allEvents: LeaveEvent[] = [];
+        let holidayDates = new Set<string>();
+
+        // 공휴일 이벤트 추가
+        if (holidayResponse.status === 'fulfilled' && holidayResponse.value.success) {
+          const holidayData = holidayResponse.value.data as HolidayData[];
+          const holidayEvents = holidayData.map(convertHolidayToEvent);
+          allEvents = [...allEvents, ...holidayEvents];
+          
+          // 공휴일 날짜 Set에 저장 (CSS 클래스 적용용)
+          holidayDates = new Set(holidayData.map(holiday => holiday.date));
+        } else {
+          console.error('공휴일 데이터 조회 오류:', holidayResponse.status === 'rejected' ? holidayResponse.reason : '알 수 없는 오류');
+        }
+
+        // 연차 이벤트 추가
+        if (leaveList.status === 'fulfilled') {
+          // 취소된 연차와 반려된 연차는 캘린더에서 제외 (승인된 연차와 대기중인 연차만 표시)
+          const activeLeaves = leaveList.value.filter((leave: LeaveData) => 
+            leave.status !== 'canceled' && leave.status !== 'rejected'
+          );
+          
+          // 연차 데이터를 캘린더 이벤트로 변환
+          const leaveEvents = activeLeaves.map(convertLeaveToEvent);
+          allEvents = [...allEvents, ...leaveEvents];
+        } else {
+          console.error('연차 데이터 조회 오류:', leaveList.reason);
+          setError('연차 데이터를 불러오는 중 오류가 발생했습니다.');
+        }
+
+        setEvents(allEvents);
+        setHolidayDates(holidayDates);
+      } catch (error) {
+        console.error('데이터 조회 오류:', error);
+        setError('데이터를 불러오는 중 오류가 발생했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user?.id) {
+      fetchData();
+    }
+  }, [user?.id]);
+
+  // 날짜 클릭 핸들러 - 연차 신청 페이지로 이동
+  const handleDateClick = (info: DateClickArg) => {
+    const selectedDate = info.dateStr;
+    navigate(`/leave-system/apply?date=${selectedDate}`);
+  };
+
+  // 이벤트 클릭 핸들러 - 연차/공휴일 상세 정보 모달 표시
+  const handleEventClick = (info: EventClickArg) => {
+    const event = info.event;
+    const props = event.extendedProps;
+    
+    // 실제 표시되는 기간 계산 (FullCalendar의 end는 exclusive이므로)
+    let periodText = '';
+    let days = 0;
+    
+    if (event.start) {
+      const actualStartDate = new Date(event.start);
+      const startDate = formatKSTDate(actualStartDate);
+      
+      if (event.end && props.eventType === 'leave') {
+        // end 날짜에서 하루를 빼서 실제 마지막 날 계산
+        const actualEndDate = new Date(event.end);
+        actualEndDate.setDate(actualEndDate.getDate() - 1);
+        const endDate = formatKSTDate(actualEndDate);
+        
+        periodText = startDate === endDate ? startDate : `${startDate} ~ ${endDate}`;
+        
+        // 주말 및 공휴일을 제외한 업무일 수 계산
+        days = calculateBusinessDaysKST(actualStartDate, actualEndDate, holidayDates);
+      } else {
+        periodText = startDate;
+        // 단일 날짜인 경우 (공휴일 또는 하루짜리 연차)
+        if (props.eventType === 'holiday') {
+          days = 1; // 공휴일은 항상 1일
+        } else {
+          const dayOfWeek = actualStartDate.getDay();
+          const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+          // 주말이 아니면서 공휴일도 아닌 경우에만 1일
+          days = !isWeekend && !holidayDates.has(startDate) ? 1 : 0;
+        }
+      }
+    }
+    
+    setModalData({
+      employeeName: props.employeeName,
+      leaveType: props.leaveType,
+      status: props.status,
+      reason: props.reason,
+      period: periodText,
+      days: days,
+      eventType: props.eventType
+    });
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setModalData(null);
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'approved': return '승인됨';
+      case 'pending': return '대기중';
+      case 'rejected': return '반려됨';
+      case 'canceled': return '취소됨';
+      default: return '알 수 없음';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="leave-calendar-container">
+        <div className="loading">캘린더를 불러오는 중...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="leave-calendar-container">
+        <div className="error-message">
+          <p>{error}</p>
+          <button 
+            className="btn-primary" 
+            onClick={() => window.location.reload()}
+          >
+            다시 시도
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="leave-calendar-container">
+      <div className="calendar-header">
+        <h1>연차 캘린더</h1>
+        <div className="calendar-actions">
+          <button 
+            className="btn-primary"
+            onClick={() => navigate('/leave-system/apply')}
+          >
+            새 연차 신청
+          </button>
+          <button 
+            className="btn-secondary"
+            onClick={() => navigate('/leave-system/list')}
+          >
+            신청 내역 보기
+          </button>
+        </div>
+      </div>
+
+      <div className="calendar-legend">
+        <div className="legend-item">
+          <span className="legend-color approved"></span>
+          <span>승인된 연차</span>
+        </div>
+        <div className="legend-item">
+          <span className="legend-color pending"></span>
+          <span>대기 중인 연차</span>
+        </div>
+      </div>
+
+      <div className="calendar-wrapper">
+        <FullCalendar
+          plugins={[dayGridPlugin, interactionPlugin]}
+          initialView="dayGridMonth"
+          locale="ko"
+          headerToolbar={{
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,dayGridWeek'
+          }}
+          events={events}
+          dateClick={handleDateClick}
+          eventClick={handleEventClick}
+          height="auto"
+          dayMaxEvents={3}
+          moreLinkClick="popover"
+          eventDisplay="block"
+          displayEventTime={false}
+          weekends={true}
+          selectable={true}
+          selectMirror={true}
+          dayCellContent={(args) => {
+            return args.dayNumberText.replace('일', '');
+          }}
+          dayCellClassNames={(args) => {
+            return holidayDates.has(formatLocalDate(args.date)) ? 'holiday' : '';
+          }}
+        />
+      </div>
+
+      <div className="calendar-help">
+        <h3>사용 방법</h3>
+        <ul>
+          <li>날짜를 클릭하면 해당 날짜에 연차를 신청할 수 있습니다.</li>
+          <li>연차 이벤트를 클릭하면 상세 정보를 확인할 수 있습니다.</li>
+          <li>색상별로 연차 상태를 구분할 수 있습니다.</li>
+          <li>모든 직원의 연차 일정을 확인할 수 있습니다.</li>
+          <li>공휴일이 빨간색으로 표시됩니다.</li>
+        </ul>
+      </div>
+
+      {/* 이벤트 상세 정보 모달 */}
+      {isModalOpen && modalData && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{modalData.eventType === 'holiday' ? '공휴일 정보' : '연차 정보'}</h3>
+              <button className="modal-close" onClick={closeModal}>
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              {modalData.eventType === 'leave' && modalData.employeeName && (
+                <div className="info-row">
+                  <span className="info-label">직원명:</span>
+                  <span className="info-value">{modalData.employeeName}</span>
+                </div>
+              )}
+              <div className="info-row">
+                <span className="info-label">{modalData.eventType === 'holiday' ? '공휴일명' : '휴가 종류'}:</span>
+                <span className="info-value">{modalData.leaveType}</span>
+              </div>
+              {modalData.eventType === 'leave' && modalData.status && (
+                <div className="info-row">
+                  <span className="info-label">상태:</span>
+                  <span className={`info-value status-${modalData.status}`}>
+                    {getStatusText(modalData.status)}
+                  </span>
+                </div>
+              )}
+              <div className="info-row">
+                <span className="info-label">기간:</span>
+                <span className="info-value">{modalData.period}</span>
+              </div>
+              {modalData.eventType === 'leave' && (
+                <div className="info-row">
+                  <span className="info-label">일수:</span>
+                  <span className="info-value">{modalData.days}일</span>
+                </div>
+              )}
+              {modalData.reason && modalData.eventType === 'leave' && (
+                <div className="info-row">
+                  <span className="info-label">사유:</span>
+                  <span className="info-value">{modalData.reason}</span>
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={closeModal}>
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default LeaveCalendar; 

@@ -7,6 +7,7 @@ const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isOrderSubMenuOpen, setIsOrderSubMenuOpen] = useState(false);
     const [isInventorySubMenuOpen, setIsInventorySubMenuOpen] = useState(false);
+    const [isLeaveSubMenuOpen, setIsLeaveSubMenuOpen] = useState(false);
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
@@ -15,12 +16,15 @@ const Navbar = () => {
     const isInOrderSystem = location.pathname.startsWith('/order-system');
     // 현재 경로가 재고 관리 시스템 내에 있는지 확인
     const isInInventorySystem = location.pathname.startsWith('/inventory-system');
+    // 현재 경로가 연차 관리 시스템 내에 있는지 확인
+    const isInLeaveSystem = location.pathname.startsWith('/leave-system');
 
     // 현재 경로에 따라 하위 메뉴 상태 업데이트
     useEffect(() => {
         setIsOrderSubMenuOpen(isInOrderSystem);
         setIsInventorySubMenuOpen(isInInventorySystem);
-    }, [isInOrderSystem, isInInventorySystem]);
+        setIsLeaveSubMenuOpen(isInLeaveSystem);
+    }, [isInOrderSystem, isInInventorySystem, isInLeaveSystem]);
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
@@ -32,6 +36,10 @@ const Navbar = () => {
 
     const toggleInventorySubMenu = () => {
         setIsInventorySubMenuOpen(!isInventorySubMenuOpen);
+    };
+
+    const toggleLeaveSubMenu = () => {
+        setIsLeaveSubMenuOpen(!isLeaveSubMenuOpen);
     };
 
     const handleLogout = () => {
@@ -107,6 +115,55 @@ const Navbar = () => {
                             재고 현황
                         </NavLink>
                     </li>
+                )}
+
+                {/* 연차 관리 시스템 메뉴 */}
+                <li className="menu-section">
+                    <div 
+                        className={`section-title ${isInLeaveSystem ? 'active-section' : ''}`}
+                        onClick={toggleLeaveSubMenu}
+                        style={{ cursor: 'pointer' }}
+                    >
+                        연차 관리 시스템
+                    </div>
+                </li>
+                {isLeaveSubMenuOpen && (
+                    <>
+                        <li>
+                            <NavLink
+                                to="/leave-system/calendar"
+                                className={({ isActive }) => isActive ? 'active' : ''}
+                            >
+                                연차 캘린더
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink
+                                to="/leave-system/apply"
+                                className={({ isActive }) => isActive ? 'active' : ''}
+                            >
+                                연차 신청
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink
+                                to="/leave-system/list"
+                                className={({ isActive }) => isActive ? 'active' : ''}
+                            >
+                                연차 신청 내역
+                            </NavLink>
+                        </li>
+                        {user?.role === 'admin' && (
+                            <li>
+                                <NavLink
+                                    to="/leave-system/admin"
+                                    className={({ isActive }) => isActive ? 'active' : ''}
+                                >
+                                    연차 관리 (관리자)
+                                </NavLink>
+                            </li>
+                        )}
+                    </>
                 )}
             </ul>
 

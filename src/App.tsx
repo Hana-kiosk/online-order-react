@@ -10,6 +10,10 @@ import './App.css';
 import { useNavigate } from 'react-router-dom';
 import InventoryManagement from './components/inventory/InventoryManagement';
 import InventoryForm from './components/inventory/InventoryForm';
+import LeaveCalendar from './components/leave/LeaveCalendar';
+import LeaveApply from './components/leave/LeaveApply';
+import LeaveAdmin from './components/leave/LeaveAdmin';
+import LeaveList from './components/leave/LeaveList';
 
 // 플랫폼 메인 홈페이지 컴포넌트
 const PlatformHome = () => {
@@ -35,6 +39,14 @@ const PlatformHome = () => {
         >
           <div className="service-icon">🧮</div>
           <div className="service-label">재고 관리 시스템</div>
+        </button>
+        
+        <button 
+          className="platform-service-button"
+          onClick={() => navigate('/leave-system')}
+        >
+          <div className="service-icon">📅</div>
+          <div className="service-label">연차 관리 시스템</div>
         </button>
       </div>
     </div>
@@ -92,6 +104,45 @@ const InventorySystemHome = () => {
     </div>
   );
 };
+
+// 연차 관리 시스템 홈페이지 컴포넌트
+const LeaveSystemHome = () => {
+  const navigate = useNavigate();
+
+  return (
+    <div className="platform-home-container">
+      <h1>하나플랫폼 연차 관리 시스템</h1>
+      <p>아래 버튼을 눌러 원하는 작업을 시작하세요.</p>
+      
+      <div className="kiosk-buttons">
+        <button 
+          className="kiosk-button list-button" 
+          onClick={() => navigate('/leave-system/calendar')}
+        >
+          <div className="kiosk-icon">📅</div>
+          <div className="kiosk-label">연차 캘린더</div>
+        </button>
+        
+        <button 
+          className="kiosk-button form-button" 
+          onClick={() => navigate('/leave-system/apply')}
+        >
+          <div className="kiosk-icon">📝</div>
+          <div className="kiosk-label">연차 신청</div>
+        </button>
+        
+        <button 
+          className="kiosk-button list-button" 
+          onClick={() => navigate('/leave-system/list')}
+        >
+          <div className="kiosk-icon">📋</div>
+          <div className="kiosk-label">연차 신청 내역</div>
+        </button>
+      </div>
+    </div>
+  );
+};
+
 
 function App() {
   return (
@@ -209,6 +260,77 @@ function App() {
                   <Navbar />
                   <div className="content">
                     <InventoryForm />
+                  </div>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* 연차 관리 시스템 라우트 */}
+          <Route
+            path="/leave-system"
+            element={
+              <ProtectedRoute>
+                <div className="app-container">
+                  <Navbar />
+                  <div className="content">
+                    <LeaveSystemHome />
+                  </div>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/leave-system/calendar"
+            element={
+              <ProtectedRoute>
+                <div className="app-container">
+                  <Navbar />
+                  <div className="content">
+                    <LeaveCalendar />
+                  </div>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/leave-system/apply"
+            element={
+              <ProtectedRoute>
+                <div className="app-container">
+                  <Navbar />
+                  <div className="content">
+                    <LeaveApply />
+                  </div>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/leave-system/list"
+            element={
+              <ProtectedRoute>
+                <div className="app-container">
+                  <Navbar />
+                  <div className="content">
+                    <LeaveList />
+                  </div>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/leave-system/admin"
+            element={
+              <ProtectedRoute>
+                <div className="app-container">
+                  <Navbar />
+                  <div className="content">
+                    <LeaveAdmin />
                   </div>
                 </div>
               </ProtectedRoute>
